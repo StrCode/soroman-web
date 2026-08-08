@@ -117,13 +117,18 @@
 
 @theme inline {
 	/*
-   * Inter v4 is the brand face. One family only: wght 100-900 plus an optical
-   * size axis (opsz 14-32) that browsers drive automatically from font-size.
-   * Its italic is deliberately not loaded — emphasis stays weight and colour,
-   * so an unguarded <em> synthesises an oblique rather than fetching 78KB.
+   * Satoshi is the brand face. One family only, wght 300-900 — and that
+   * includes figures, since Satoshi ships no monospace sibling, so numbers are
+   * set in the same face as everything else. Its italic is deliberately not
+   * loaded: emphasis stays weight and colour.
+   *
+   * The @font-face lives in src/index.css (self-hosted woff2).
    */
 	--font-sans:
-		"Inter Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		"Satoshi", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+	/* No monospace cut exists — font-mono resolves to the brand face too. */
+	--font-mono: "Satoshi", ui-monospace, SFMono-Regular, Menlo, monospace;
 
 	/* Cinematic timing — nothing snaps */
 	--ease-luxe: cubic-bezier(0.25, 0.46, 0.45, 0.94);

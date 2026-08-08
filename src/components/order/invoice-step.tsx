@@ -1,4 +1,3 @@
-import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -296,17 +295,10 @@ export default function InvoiceStep({
 						</p>
 						<p className="mt-1 text-xs text-muted-foreground">
 							Your trucks are being scheduled. Every status change reaches you
-							by SMS.
+							by SMS.{" "}
+							{/* Tracking and the rest of the exits live in the
+							NextSteps panel directly below, so this stays a confirmation. */}
 						</p>
-						<Button
-							className="mt-3"
-							nativeButton={false}
-							render={
-								<Link to="/t/$ref" params={{ ref: order.id }}>
-									Track this order
-								</Link>
-							}
-						/>
 					</div>
 				)}
 			</div>

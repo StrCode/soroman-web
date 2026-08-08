@@ -1,8 +1,21 @@
-/* opsz.css, not the default index.css — the latter ships wght only, silently
-   dropping the optical-size axis. Subsets are unicode-range gated, so only
-   latin is fetched. */
-@import "@fontsource-variable/inter/opsz.css";
 @import "./styles/globals.css";
+
+/*
+ * Satoshi (Fontshare / Indian Type Foundry) is the brand face — one variable
+ * file covering wght 300-900, self-hosted rather than pulled from the
+ * Fontshare CDN so a slow third party can never block first paint. The italic
+ * cut is deliberately not loaded: emphasis is weight and colour, so an
+ * unguarded <em> synthesises an oblique instead of fetching a second file.
+ *
+ * Satoshi has no monospace sibling, so figures are the same face as body text.
+ */
+@font-face {
+	font-family: "Satoshi";
+	src: url("/fonts/Satoshi-Variable.woff2") format("woff2");
+	font-weight: 300 900;
+	font-style: normal;
+	font-display: swap;
+}
 
 /* Market snapshot — one-time entrance for the live rows, and the live pulse. */
 @keyframes snapshot-rise {

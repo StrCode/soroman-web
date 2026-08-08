@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import InvoiceStep from "@/components/order/invoice-step";
 import LoadingStep from "@/components/order/loading-step";
+import NextSteps from "@/components/order/next-steps";
 import OrderStep from "@/components/order/order-step";
 import ReviewStep from "@/components/order/review-step";
 import VerifyStep, {
@@ -346,6 +347,7 @@ function OrderPage() {
 							void placeOrder().catch(() => {});
 						}}
 					/>
+					<NextSteps orderId={order.id} />
 				</div>
 			</div>
 		);
