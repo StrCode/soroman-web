@@ -1,0 +1,230 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowLeft } from "lucide-react";
+import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
+import { formatPhoneForDisplay } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { formatNaira, useCatalog } from "@/lib/use-catalog";
+
+/**
+ * THE front door for ordering — the "between 1 & 5" concept: a slim left
+ * gutter (always a back control — dashboard when signed in, home as a guest),
+ * a session row, and the three CHANNELS as boxes. Depot is one box, not one
+ * per product — WHAT you're buying is the depot flow's own first step. Deep
+ * links with intent (a depot in the URL, a reorder draft) jump straight into
+ * /order/depot; this page is the generic start.
+ *
+ * Owns its chrome (session row + gutter), so the slim header stays off here.
+ */
+export const Route = createFileRoute("/_slim/order")({
+	component: ChooseProductPage,
+});
+
+const MONO_LABEL =
+	"font-mono text-[0.6rem] font-medium tracking-[0.12em] uppercase text-muted-foreground";
+
+function ChooseProductPage() {
+	const auth = useAuth();
+	const { depots, products, isLoading } = useCatalog();
+
+	// Cheapest live litre across open depots for the depot channel's "from"
+	// price — PMS and AGO both live behind that one door, so the honest number
+	// is the best of either board.
+	const fromPrice = useMemo(() => {
+		const open = new Set(depots.filter((d) => d.is_open).map((d) => d.id));
+		let best: number | null = null;
+		for (const p of products) {
+			if (!p.available || !open.has(p.depot_id) || p.price <= 0) continue;
+			const code = p.abbreviation.toUpperCase();
+			if (code !== "PMS" && code !== "AGO") continue;
+			if (best === null || p.price < best) best = p.price;
+		}
+		return best;
+	}, [depots, products]);
+
+	const customer = auth.status === "authed" ? auth.customer : null;
+	const displayName =
+		customer?.company_name ||
+		customer?.name ||
+		(customer ? formatPhoneForDisplay(customer.phone) : "");
+	const initials =
+		displayName
+			.split(/\s+/)
+			.map((w) => w[0])
+			.filter(Boolean)
+			.slice(0, 2)
+			.join("")
+			.toUpperCase() || "?";
+
+	return (
+		<div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-6 px-4 pt-7 pb-16 sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:px-6 md:gap-x-8">
+			{/* The gutter: one back control — destination depends on session. */}
+			<aside className="mb-4 sm:mb-0">
+				<Link
+					to={auth.status === "authed" ? "/dashboard" : "/"}
+					aria-label={
+						auth.status === "authed" ? "Back to dashboard" : "Back to home"
+					}
+					className="ease-luxe flex size-11 items-center justify-center rounded-full border border-foreground/15 bg-card shadow-xs transition-colors duration-250 hover:border-foreground/30 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+				>
+					<ArrowLeft className="size-5" />
+				</Link>
+			</aside>
+
+			<main className="min-w-0">
+				{/* Session row: who's here, and the one action that fits. */}
+				<div className="mb-7 flex min-h-11 flex-wrap items-center justify-between gap-3">
+					{customer ? (
+						<>
+							<div
+								className="inline-flex items-center gap-2.5 rounded-full border border-foreground/15 bg-card py-1 pr-3.5 pl-1.5 text-sm font-medium"
+								aria-label={`Signed in as ${displayName}`}
+							>
+								<span className="grid size-7 place-items-center rounded-full bg-accent/10 font-mono text-[0.62rem] font-semibold text-accent">
+									{initials}
+								</span>
+								<span className="flex flex-col leading-tight">
+									<small className="font-mono text-[0.58rem] tracking-[0.1em] text-muted-foreground uppercase">
+										Signed in
+									</small>
+									<span>{displayName}</span>
+								</span>
+							</div>
+							<Link
+								to="/dashboard"
+								className="ease-luxe text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-foreground"
+							>
+								Dashboard
+							</Link>
+						</>
+					) : (
+						<div className="ml-auto flex items-center gap-4">
+							<Link
+								to="/register"
+								className="ease-luxe text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-foreground"
+							>
+								Create account
+							</Link>
+							<Link
+								to="/login"
+								search={{ redirect: "/order" }}
+								className="inline-flex min-h-9 items-center rounded-full bg-foreground px-4 text-sm font-semibold text-background"
+							>
+								Sign in
+							</Link>
+						</div>
+					)}
+				</div>
+
+				<p className="font-mono text-[0.68rem] tracking-[0.16em] text-muted-foreground uppercase">
+					New order
+				</p>
+				<h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
+					What are you ordering?
+				</h1>
+				<p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
+					Three channels. Depot board, bulk quote, or cylinders — pick the box
+					that matches.
+				</p>
+				{!customer && (
+					<p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
+						You can browse prices as a guest.{" "}
+						<Link
+							to="/login"
+							search={{ redirect: "/order" }}
+							className="font-semibold text-accent hover:underline"
+						>
+							Sign in
+						</Link>{" "}
+						when you're ready to place or track an order.
+					</p>
+				)}
+
+				<div className="mt-9 grid gap-3.5 lg:grid-cols-3">
+					<ChannelBox
+						to="/order/depot"
+						idx="01"
+						title="Soroman Depot"
+						description="PMS & AGO at today's board price. Pickup or delivery after you lock the quote."
+						priceLabel="From today"
+						priceValue={
+							isLoading
+								? null
+								: fromPrice !== null
+									? `${formatNaira(fromPrice)}/L`
+									: "Board opens soon"
+						}
+						go="Enter →"
+					/>
+					<ChannelBox
+						to="/order/dangote-delivery"
+						idx="02"
+						title="Dangote Delivery"
+						description="Bulk ex-Dangote to site. Company documents in — quote after review."
+						priceLabel="Path"
+						priceValue="Quote request"
+						go="Request →"
+					/>
+					<ChannelBox
+						to="/order/cooking-gas"
+						idx="03"
+						title="Cooking Gas"
+						description="Cylinder refills to your door. Pick sizes, pay, track."
+						priceLabel="From"
+						priceValue="₦4,500/cyl"
+						go="Order →"
+					/>
+				</div>
+			</main>
+		</div>
+	);
+}
+
+function ChannelBox({
+	to,
+	idx,
+	title,
+	description,
+	priceLabel,
+	priceValue,
+	go,
+}: {
+	to: string;
+	idx: string;
+	title: string;
+	description: string;
+	priceLabel: string;
+	priceValue: string | null;
+	go: string;
+}) {
+	return (
+		<Link
+			to={to}
+			className="group ease-luxe flex flex-col rounded-xl border border-foreground/15 bg-card p-5 transition-all duration-250 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.06)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.99] lg:min-h-70"
+		>
+			<span className="font-mono text-xs font-semibold text-muted-foreground">
+				{idx}
+			</span>
+			<h2 className="mt-4 text-lg font-semibold tracking-tight">{title}</h2>
+			<p className="mt-1.5 flex-1 text-sm leading-relaxed text-muted-foreground">
+				{description}
+			</p>
+			<div className="mt-5 flex items-end justify-between gap-3 border-t border-dashed border-foreground/15 pt-4">
+				<div>
+					<div className={MONO_LABEL}>{priceLabel}</div>
+					{priceValue === null ? (
+						<Skeleton className="mt-1 h-5 w-24" />
+					) : (
+						<div className="mt-1 font-semibold tracking-tight tabular-nums">
+							{priceValue}
+						</div>
+					)}
+				</div>
+				<span className="ease-luxe font-mono text-[0.68rem] font-semibold tracking-[0.1em] whitespace-nowrap text-muted-foreground uppercase transition-colors duration-250 group-hover:text-accent">
+					{go}
+				</span>
+			</div>
+		</Link>
+	);
+}

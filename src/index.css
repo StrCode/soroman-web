@@ -1,0 +1,44 @@
+/* opsz.css, not the default index.css — the latter ships wght only, silently
+   dropping the optical-size axis. Subsets are unicode-range gated, so only
+   latin is fetched. */
+@import "@fontsource-variable/inter/opsz.css";
+@import "./styles/globals.css";
+
+/* Market snapshot — one-time entrance for the live rows, and the live pulse. */
+@keyframes snapshot-rise {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes live-pulse {
+	0%,
+	100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.35;
+		transform: scale(0.8);
+	}
+}
+
+.snapshot-rise {
+	animation: snapshot-rise 500ms var(--ease-luxe) both;
+}
+
+.live-dot {
+	animation: live-pulse 2s var(--ease-luxe) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.snapshot-rise,
+	.live-dot {
+		animation: none;
+	}
+}
