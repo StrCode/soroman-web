@@ -1456,7 +1456,7 @@ export const api = {
 		): Promise<CommissionsListResult> => {
 			const query = new URLSearchParams();
 			query.set("page", String(params.page ?? 1));
-			query.set("limit", String(params.limit ?? 20));
+			query.set("limit", String(params.limit ?? 10));
 			if (params.status && params.status !== "all")
 				query.set("status", params.status);
 			if (params.dateFrom) query.set("dateFrom", params.dateFrom);
