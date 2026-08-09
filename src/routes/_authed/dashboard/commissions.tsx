@@ -251,7 +251,7 @@ function CommissionsPage() {
 									pages: pagination.pages,
 									total: pagination.total,
 									label: "commissions",
-									alwaysShow: pagination.pages > 1,
+									alwaysShow: true,
 									onPageChange: setPage,
 								}
 							: undefined
