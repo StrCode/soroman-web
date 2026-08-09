@@ -13,7 +13,7 @@ export const Route = createFileRoute("/_authed/dashboard/commissions")({
 	component: CommissionsPage,
 });
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 const formatWhen = (iso: string) =>
 	new Date(iso).toLocaleString("en-NG", {
