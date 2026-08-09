@@ -2,7 +2,7 @@ import type { LoadingDetails, OrderRecord, TruckEntry } from "./api";
 
 /**
  * A half-built depot order survives a refresh while you're still in the
- * wizard: the draft lives in sessionStorage until the price is locked, or
+ * wizard: the draft lives in sessionStorage until the order is placed, or
  * until you leave /order/depot (back to the chooser, dashboard, etc.). Shared
  * here so the dashboard can seed a draft (reorder) before handing off to the
  * order route.

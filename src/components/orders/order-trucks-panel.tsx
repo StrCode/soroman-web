@@ -364,7 +364,7 @@ export function OrderTrucksPanel({
 
 			{!editable && (
 				<p className="mt-2 text-xs text-muted-foreground">
-					Truck details are locked once loading starts. Message the desk with
+					Truck details can&apos;t be changed once loading starts. Message the desk with
 					order{" "}
 					<span className="font-medium text-foreground tabular-nums">
 						{order.id}

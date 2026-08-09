@@ -3,7 +3,12 @@ import { useMemo } from "react";
 import { StoreBadges } from "@/components/store-badges";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { formatNaira, useCatalog } from "@/lib/use-catalog";
+import {
+	canonicalProduct,
+	formatNaira,
+	PRODUCT_ORDER,
+	useCatalog,
+} from "@/lib/use-catalog";
 
 /**
  * Mobile app section: a bordered muted panel closing the page, copy and
@@ -20,8 +25,6 @@ const FEATURES = [
 	"Reorder previous purchases in just a few clicks",
 ];
 
-const PRODUCT_ORDER = ["PMS", "AGO", "DPK", "ATK"];
-
 type BestQuote = { abbr: string; price: number; unit: string; depot: string };
 
 export default function AppPromo() {
@@ -34,10 +37,13 @@ export default function AppPromo() {
 		const best = new Map<string, BestQuote>();
 		for (const p of products) {
 			if (!p.available || !openDepots.has(p.depot_id)) continue;
-			const current = best.get(p.abbreviation);
+			// Keyed by canonical fuel, like the board: two depots calling petrol
+			// "Petrol" and "PMS" are one product, not two rows in the mock.
+			const key = canonicalProduct(p).key;
+			const current = best.get(key);
 			if (current === undefined || p.price < current.price) {
-				best.set(p.abbreviation, {
-					abbr: p.abbreviation,
+				best.set(key, {
+					abbr: key,
 					price: p.price,
 					unit: p.unit,
 					depot: openDepots.get(p.depot_id) ?? "",

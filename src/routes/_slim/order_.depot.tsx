@@ -79,9 +79,8 @@ const STEP_COPY: Partial<
 		description: "A phone number saves this order so you can pay and track it.",
 	},
 	review: {
-		title: "Review & create",
-		description:
-			"Confirm the details, then create your order at today's board price.",
+		title: "Review & order",
+		description: "Confirm the details, then place your order at today's price.",
 	},
 };
 
@@ -110,7 +109,7 @@ function pickupTrucksValid(
 }
 
 /**
- * Depot channel wizard — PMS/AGO at board prices. The chooser at /order
+ * Depot channel wizard — PMS/AGO at today's prices. The chooser at /order
  * points here; deep links with intent (depot search param, seeded draft)
  * also land here.
  */
@@ -315,7 +314,7 @@ function OrderPage() {
 						}
 					: step === "review"
 						? {
-								label: "Create order",
+								label: "Place order",
 								busy: placeBusy,
 								onClick: () => void createOrder(),
 							}
@@ -343,7 +342,7 @@ function OrderPage() {
 				<div className="mt-6">
 					<InvoiceStep
 						order={order}
-						onRequote={() => {
+						onReprice={() => {
 							void placeOrder().catch(() => {});
 						}}
 					/>
@@ -400,7 +399,7 @@ function OrderPage() {
 			/>
 			<WizardHeading
 				title="Order from Soroman Depots"
-				subtitle="Fuel products at today's board price — Place your fuel order and get your invoice instantly"
+				subtitle="Fuel products at today's prices — place your order and get your invoice instantly"
 			/>
 
 			<div className="mt-6">

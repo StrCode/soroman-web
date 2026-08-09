@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import { MICRO, PANEL } from "@/components/dashboard/panel";
 import { Button } from "@/components/ui/button";
 import { CopyIconButton } from "@/components/virtual-account";
-import type { OrderRecord, OrderStatus, VirtualAccount } from "@/lib/api";
+import {
+	formatPriceValidUntil,
+	type OrderRecord,
+	type OrderStatus,
+	type VirtualAccount,
+} from "@/lib/api";
 import { seedDraftFromOrder } from "@/lib/order-draft";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -11,7 +16,7 @@ import { cn } from "@/lib/utils";
 /**
  * The action-first hero: one prominent card that answers "what do I do now?"
  * by adapting to the customer's most urgent order —
- *   awaiting payment → the invoice: amount due, price-lock countdown, the
+ *   awaiting payment → the invoice: amount due, price countdown, the
  *                       account to transfer into, and a live "listening" pulse
  *                       that resolves the moment the transfer confirms;
  *   in motion        → the order's journey along the 5-stage tracker;
@@ -69,7 +74,7 @@ function CleanState() {
 					Nothing in motion. Ready when you are.
 				</p>
 				<p className="mt-1.5 text-sm text-muted-foreground">
-					Lock today's depot price and pay by transfer or from your wallet.
+					Order at today's depot price and pay by transfer or from your wallet.
 				</p>
 			</div>
 			<Button size="lg" nativeButton={false} render={<Link to="/order" />}>
@@ -99,6 +104,7 @@ function InvoiceHero({
 		? Math.max(0, Math.round((expiresAt - now) / 60_000))
 		: null;
 	const expired = minutesLeft === 0;
+	const validUntil = formatPriceValidUntil(order.lock_expires_at);
 
 	return (
 		<section
@@ -107,9 +113,9 @@ function InvoiceHero({
 		>
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-600/25 px-6 py-4">
 				<span className="rounded-full border border-amber-600/40 px-2.5 py-0.5 text-[0.65rem] tracking-[0.14em] whitespace-nowrap text-amber-600 uppercase dark:text-amber-500">
-					{expired
-						? "Price lock expired"
-						: `Price lock · ${minutesLeft} min left`}
+					{expired || !validUntil
+						? "Price expired"
+						: `Price valid till ${validUntil}`}
 				</span>
 				<span className="text-xs text-muted-foreground tabular-nums">
 					Invoice {order.id}

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import {
 	api,
+	describePriceWindow,
 	type OrderRecord,
 	type OrderStatus,
 	type OrdersListParams,
@@ -117,17 +118,6 @@ const formatDate = (iso?: string) =>
 		? new Date(iso).toLocaleDateString("en-NG", { dateStyle: "medium" })
 		: "—";
 
-/** Human remaining time on the price lock — "42 min" / "2h 10m". */
-function formatLockRemaining(iso: string): string {
-	const ms = Date.parse(iso) - Date.now();
-	if (Number.isNaN(ms) || ms <= 0) return "lock expired";
-	const mins = Math.round(ms / 60_000);
-	if (mins < 60) return `lock expires in ${mins} min`;
-	const h = Math.floor(mins / 60);
-	const m = mins % 60;
-	return m > 0 ? `lock expires in ${h}h ${m}m` : `lock expires in ${h}h`;
-}
-
 /** Stable column defs — module-level so useReactTable never re-creates them. */
 const columns: AppColumnDef<OrderRecord>[] = [
 	{
@@ -207,7 +197,7 @@ const columns: AppColumnDef<OrderRecord>[] = [
 
 /**
  * Depot orders desk: purpose line, pipeline counts, needs-attention strip for
- * unpaid locks, then the full history table. Counts come from lightweight
+ * unpaid invoices, then the full history table. Counts come from lightweight
  * status-filtered list calls (pagination.total); the table keeps its own
  * paginated query.
  */
@@ -302,8 +292,8 @@ function OrdersPage() {
 						<em className="font-semibold text-accent not-italic">orders</em>.
 					</h1>
 					<p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-						Board-price fuel — lock today&apos;s rate, pay by transfer or
-						wallet, track to the gate.
+						Fuel at today&apos;s prices — order, pay by transfer or wallet,
+						track to the gate.
 					</p>
 				</div>
 				<Button nativeButton={false} render={<Link to="/order/depot" />}>
@@ -373,8 +363,8 @@ function OrdersPage() {
 									<p className="mt-0.5 text-xs text-amber-900/75">
 										{describeLines(order)}
 										{order.depot_name ? ` · ${order.depot_name}` : ""}
-										{order.lock_expires_at
-											? ` · ${formatLockRemaining(order.lock_expires_at)}`
+										{describePriceWindow(order.lock_expires_at)
+											? ` · ${describePriceWindow(order.lock_expires_at)}`
 											: ""}
 									</p>
 								</div>
@@ -433,7 +423,7 @@ function OrdersPage() {
 					}
 					emptyDescription={
 						filter === "all" && (!data || data.pagination.total === 0)
-							? "Lock today's depot price and pay by transfer or from your wallet — progress lives here."
+							? "Order at today's depot price and pay by transfer or from your wallet — progress lives here."
 							: undefined
 					}
 					emptyAction={

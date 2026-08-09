@@ -48,7 +48,7 @@ export const Route = createFileRoute(
 });
 
 /**
- * Dangote request detail — next-step (pay / wait) + request facts in the main
+ * Dangote order detail — next-step (pay / wait) + order facts in the main
  * column; sticky Actions + Progress in the rail.
  */
 function DangoteDeliveryOrderDetailPage() {
@@ -226,7 +226,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 								What&apos;s happening
 							</p>
 							<p className="mt-2.5 text-base font-medium tracking-tight">
-								The Dangote team is reviewing and pricing this request.
+								The Dangote team is reviewing and pricing this order.
 							</p>
 							<p className="mt-2 max-w-xl text-sm text-muted-foreground">
 								Nothing to pay yet. When your order is priced, this page will
@@ -335,8 +335,8 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 							</p>
 							<p className="mt-2 text-sm text-muted-foreground">
 								{request.status === "Cancelled"
-									? "You withdrew this request. Submit a new one anytime."
-									: "This request didn't pass review. Contact support if you need help."}
+									? "You withdrew this order. Place a new one anytime."
+									: "This order didn't pass review. Contact support if you need help."}
 							</p>
 						</section>
 					)}
@@ -428,7 +428,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 										<div className="my-2 h-px bg-foreground/10" />
 									)}
 									<RailAction destructive onClick={() => setCancelOpen(true)}>
-										Cancel request
+										Cancel order
 									</RailAction>
 								</>
 							)}
@@ -463,15 +463,15 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 						<DialogTitle>Cancel {request.requestNumber}?</DialogTitle>
 						<DialogDescription>
 							{request.status === "Approved"
-								? "Withdraws this order. You can submit a new request anytime."
-								: "Pulls the request out of review. You can submit a new one anytime."}
+								? "Withdraws this order. You can place a new order anytime."
+								: "Pulls the order out of review. You can place a new one anytime."}
 						</DialogDescription>
 					</DialogHeader>
 					{cancel.isError && (
 						<p className="px-5 text-xs text-destructive">
 							{cancel.error instanceof ApiError
 								? cancel.error.message
-								: "Could not cancel this request."}
+								: "Could not cancel this order."}
 						</p>
 					)}
 					<DialogFooter>
@@ -481,7 +481,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 							disabled={cancel.isPending}
 							onClick={() => setCancelOpen(false)}
 						>
-							Keep request
+							Keep order
 						</Button>
 						<Button
 							variant="destructive"
@@ -489,7 +489,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 							disabled={cancel.isPending}
 							onClick={() => cancel.mutate()}
 						>
-							{cancel.isPending ? "Cancelling…" : "Cancel request"}
+							{cancel.isPending ? "Cancelling…" : "Cancel order"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

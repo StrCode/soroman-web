@@ -35,3 +35,36 @@ export function useCatalog(): CatalogState {
 
 export const formatNaira = (amount: number) =>
 	`₦${amount.toLocaleString("en-NG")}`;
+
+/**
+ * Depots name the same fuel inconsistently — "PMS", "Pickup PMS", "PMS (Premium
+ * Motor Spirit)", "Petrol" and plain "Fuel" all mean petrol. Collapse each to
+ * one canonical fuel so every surface agrees on what a product IS.
+ *
+ * Shared rather than per-component on purpose: the price board and the order
+ * chooser both answer "what does petrol cost today", and when only the board
+ * canonicalized, a depot quoting "Petrol" showed a live price on the landing
+ * page while the chooser next to it claimed the board had not opened.
+ * Unrecognized products keep their own label so nothing is silently dropped.
+ */
+const CANONICAL_FUELS: { key: string; name: string; match: RegExp }[] = [
+	{ key: "PMS", name: "Petrol", match: /\bpms\b|petrol|premium motor/i },
+	{ key: "AGO", name: "Diesel", match: /\bago\b|diesel|gas ?oil/i },
+	{ key: "DPK", name: "Kerosene", match: /\bdpk\b|kerosene|\bkero\b/i },
+	{ key: "ATK", name: "Jet A1", match: /\batk\b|jet\s?a1?|aviation/i },
+	{ key: "LPG", name: "Cooking gas", match: /\blpg\b|cooking gas|\bgas\b/i },
+];
+
+/** Canonical column order; anything new lands after these, A–Z. */
+export const PRODUCT_ORDER = ["PMS", "AGO", "DPK", "ATK", "LPG"];
+
+export function canonicalProduct(p: DepotProduct): {
+	key: string;
+	name: string;
+} {
+	const hay = `${p.abbreviation} ${p.name}`;
+	const hit = CANONICAL_FUELS.find((f) => f.match.test(hay));
+	return hit
+		? { key: hit.key, name: hit.name }
+		: { key: p.abbreviation, name: p.name };
+}

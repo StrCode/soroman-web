@@ -5,6 +5,7 @@ import { AccountRows, CopyAllButton } from "@/components/virtual-account";
 import { env } from "@/env";
 import {
 	api,
+	formatPriceValidUntil,
 	type PaymentCredit,
 	type PlacedOrder,
 	type VirtualAccount,
@@ -14,11 +15,11 @@ import { cn } from "@/lib/utils";
 
 export default function InvoiceStep({
 	order,
-	onRequote,
+	onReprice,
 }: {
 	order: PlacedOrder;
-	/** Places the order again at current prices after the lock expires. */
-	onRequote: () => void;
+	/** Places the order again at current prices once the held price runs out. */
+	onReprice: () => void;
 }) {
 	const [account, setAccount] = useState<VirtualAccount | null>(null);
 	const [credits, setCredits] = useState<PaymentCredit[]>([]);
@@ -35,7 +36,7 @@ export default function InvoiceStep({
 	const fullyPaid = remaining === 0 && credits.length > 0;
 	const msLeft = Math.max(0, new Date(order.lock_expires_at).getTime() - now);
 	const expired = msLeft === 0 && !fullyPaid;
-	// Instant payment is offered only while the price lock holds and the wallet
+	// Instant payment is offered only while today's price still holds and the wallet
 	// actually covers the whole bill; otherwise the customer transfers instead.
 	const canPayFromWallet =
 		!fullyPaid &&
@@ -127,16 +128,21 @@ export default function InvoiceStep({
 					<span className="text-[0.65rem] tracking-[0.25em] uppercase">
 						Invoice {order.id}
 					</span>
-					<LockBadge msLeft={msLeft} paid={fullyPaid} />
+					<PriceBadge
+						validUntil={order.lock_expires_at}
+						expired={expired}
+						paid={fullyPaid}
+					/>
 				</div>
 
 				{expired && (
 					<div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/60 px-5 py-3">
 						<p className="text-xs text-muted-foreground">
-							Your price lock has ended. Re-quote to continue at today's prices.
+							This order&apos;s price is no longer valid. Reorder to continue at
+							today&apos;s price.
 						</p>
-						<Button size="sm" onClick={onRequote}>
-							Re-quote at current price
+						<Button size="sm" onClick={onReprice}>
+							Order at today's price
 						</Button>
 					</div>
 				)}
@@ -306,7 +312,15 @@ export default function InvoiceStep({
 	);
 }
 
-function LockBadge({ msLeft, paid }: { msLeft: number; paid: boolean }) {
+function PriceBadge({
+	validUntil,
+	expired,
+	paid,
+}: {
+	validUntil: string;
+	expired: boolean;
+	paid: boolean;
+}) {
 	if (paid) {
 		return (
 			<span className="text-[0.65rem] tracking-[0.15em] text-accent uppercase">
@@ -315,13 +329,10 @@ function LockBadge({ msLeft, paid }: { msLeft: number; paid: boolean }) {
 		);
 	}
 
-	const mins = Math.floor(msLeft / 60000);
-	const secs = Math.floor((msLeft % 60000) / 1000);
+	const until = formatPriceValidUntil(validUntil);
 	return (
 		<span className="text-[0.65rem] tracking-[0.15em] text-amber-700 uppercase tabular-nums dark:text-amber-500">
-			{msLeft === 0
-				? "Lock expired"
-				: `Price locked · ${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`}
+			{expired || !until ? "Price expired" : `Price valid till ${until}`}
 		</span>
 	);
 }

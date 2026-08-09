@@ -28,7 +28,7 @@ export const Route = createFileRoute("/_authed/dashboard/dangote-delivery")({
 	component: DangoteDeliveryOrdersPage,
 });
 
-/** Chip tone per state: rejection/cancel alerts, an issued quote reads positive. */
+/** Chip tone per state: rejection/cancel alerts, a confirmed price reads positive. */
 export function statusTone(status: DangoteStatus): string {
 	if (status === "Rejected" || status === "Cancelled") {
 		return "border-destructive/30 bg-destructive/10 text-destructive";
@@ -69,7 +69,7 @@ const FILTERS: {
 	},
 ];
 
-/** The quote column: a price once approved, "Pending" while under review. */
+/** The price column: a figure once approved, "Pending" while under review. */
 function quoteText(request: DangoteOrderRequestSummary): string {
 	if (request.totalAmount != null) {
 		const amount = formatNaira(Number(request.totalAmount));
@@ -117,7 +117,7 @@ const columns: AppColumnDef<DangoteOrderRequestSummary>[] = [
 		),
 	},
 	{
-		id: "quote",
+		id: "price",
 		header: "Price",
 		meta: { className: "text-right" },
 		cell: ({ row }) => (
@@ -166,7 +166,7 @@ const columns: AppColumnDef<DangoteOrderRequestSummary>[] = [
 
 /**
  * Dangote orders desk: purpose line + how-it-works, pipeline counts, attention
- * strip for unpaid approved quotes, filter tabs, then the table. Counts come
+ * strip for unpaid priced orders, filter tabs, then the table. Counts come
  * from lightweight status-filtered list calls; the table is server-paginated.
  */
 function DangoteDeliveryOrdersPage() {
@@ -267,11 +267,11 @@ function DangoteDeliveryOrdersPage() {
 						<em className="font-semibold text-accent not-italic">orders</em>.
 					</h1>
 					<p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-						Bulk order requests — no instant checkout. The team reviews and
-						prices; you pay to confirm.
+						Bulk orders delivered to site — no instant checkout. The team reviews
+						and prices; you pay to confirm.
 					</p>
 					<p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
-						<span>Request</span>
+						<span>Order</span>
 						<span aria-hidden className="opacity-40">
 							→
 						</span>
@@ -290,7 +290,7 @@ function DangoteDeliveryOrdersPage() {
 					nativeButton={false}
 					render={<Link to="/order/dangote-delivery" />}
 				>
-					Request an order
+					Place an order
 				</Button>
 			</header>
 
@@ -415,7 +415,7 @@ function DangoteDeliveryOrdersPage() {
 					}
 					emptyDescription={
 						isEmptyAll
-							? "Bulk petrol, diesel, or LPG for your business — request an order, the Dangote team reviews and prices it, then you pay to confirm."
+							? "Bulk petrol, diesel, or LPG for your business — place an order, the Dangote team reviews and prices it, then you pay to confirm."
 							: undefined
 					}
 					emptyAction={
@@ -424,7 +424,7 @@ function DangoteDeliveryOrdersPage() {
 								nativeButton={false}
 								render={<Link to="/order/dangote-delivery" />}
 							>
-								Request an order
+								Place an order
 							</Button>
 						) : undefined
 					}

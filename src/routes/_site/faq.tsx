@@ -22,7 +22,7 @@ const SECTIONS = [
 			},
 			{
 				q: "How long is the price I see honoured?",
-				a: "The price on the board is locked for one hour from the moment you order. Depot prices move through the day, so if you come back later you are re-quoted at the current price.",
+				a: "The price you see stays valid for four hours from the time you order — your invoice shows the exact time it runs to. Depot prices move through the day, so after that you simply order again at the current price.",
 			},
 			{
 				q: "What quantity can I order?",
@@ -30,7 +30,7 @@ const SECTIONS = [
 			},
 			{
 				q: "Can I order when a depot shows as closed?",
-				a: "No. A closed depot cannot load, so ordering is disabled until it reopens on the next loading day. The board shows every depot's status live.",
+				a: "No. A closed depot cannot load, so ordering is disabled until it reopens on the next loading day. The prices page shows every depot's status live.",
 			},
 		],
 	},
@@ -81,7 +81,7 @@ const SECTIONS = [
 			},
 			{
 				q: "The code has not arrived. What now?",
-				a: "Codes usually arrive in seconds. You can request a new one after a minute, and if it still does not come through, check the number you entered or reach the desk on WhatsApp.",
+				a: "Codes usually arrive in seconds. You can ask for a new one after a minute, and if it still does not come through, check the number you entered or reach the desk on WhatsApp.",
 			},
 			{
 				q: "Can I reorder something I bought before?",

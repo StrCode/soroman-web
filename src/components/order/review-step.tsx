@@ -1,9 +1,15 @@
-import type { Depot, LoadingDetails, OrderLine, TruckEntry } from "@/lib/api";
+import {
+	type Depot,
+	type LoadingDetails,
+	type OrderLine,
+	PRICE_LOCK_HOURS,
+	type TruckEntry,
+} from "@/lib/api";
 import { formatNaira } from "@/lib/use-catalog";
 
 /**
- * Last look before creating the order. Summary only — the route footer owns
- * the "Create order" CTA (same pattern as Dangote / cooking gas).
+ * Last look before placing the order. Summary only — the route footer owns
+ * the "Place order" CTA (same pattern as Dangote / cooking gas).
  */
 export default function ReviewStep({
 	depot,
@@ -87,9 +93,9 @@ export default function ReviewStep({
 				))}
 			</dl>
 			<p className="mt-6 rounded-lg border border-foreground/10 bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
-				Creating the order holds today&apos;s board price for 1 hour. Pay on the
-				next step or from your dashboard — after that window you&apos;ll need a
-				fresh quote.
+				Your price stays valid for {PRICE_LOCK_HOURS} hours from the time you
+				order. Pay on the next step or from your dashboard — after that, you
+				reorder at the current price.
 			</p>
 		</section>
 	);

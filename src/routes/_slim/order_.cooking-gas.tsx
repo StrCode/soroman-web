@@ -59,8 +59,8 @@ const STEP_COPY: Record<Step, { title: string; description: string }> = {
 		description: "Where should we bring the cylinders?",
 	},
 	review: {
-		title: "Review & submit",
-		description: "Confirm your request — delivery is priced after review.",
+		title: "Review & order",
+		description: "Confirm your order — delivery is priced after review.",
 	},
 };
 
@@ -181,7 +181,7 @@ function CookingGasWizard() {
 						onClick: () => setStep("review"),
 					}
 				: {
-						label: "Submit request",
+						label: "Place order",
 						busy,
 						onClick: () => void requestSubmit(),
 					};
@@ -222,7 +222,7 @@ function CookingGasWizard() {
 					<CardContent className="pt-6">
 						<OtpLogin
 							title="Verify your phone to submit"
-							description="Your request is saved to an account so you can track it and pay — we'll text you a code. No password."
+							description="Your order is saved to an account so you can track it and pay — we'll text you a code. No password."
 							registerName={contactName}
 							onSuccess={() => void submit()}
 						/>
@@ -439,7 +439,7 @@ function CylinderStep({
 
 			<p className="rounded-lg border border-foreground/10 bg-muted/40 p-3 text-xs leading-relaxed text-muted-foreground">
 				This is the gas price. Delivery is priced by the Soroman team after they
-				review your request — you'll see the full quote on your dashboard.
+				review your order — you'll see the full price on your dashboard.
 			</p>
 		</div>
 	);
@@ -554,8 +554,8 @@ function ReviewStep({
 				))}
 			</dl>
 			<p className="mt-6 rounded-lg border border-foreground/10 bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
-				Delivery isn't priced yet. The Soroman team reviews your request, adds
-				the delivery fee, and issues a full quote — it appears on your
+				Delivery isn't priced yet. The Soroman team reviews your order, adds the
+				delivery fee, and confirms the full price — it appears on your
 				dashboard, and you pay once you accept it.
 			</p>
 		</section>
@@ -567,19 +567,19 @@ function SubmittedPanel({ request }: { request: LpgOrderRequest }) {
 		<div className="py-6 text-center">
 			<CheckCircle2 className="mx-auto size-10 text-accent" aria-hidden />
 			<h2 className="mt-4 text-xl font-semibold tracking-tight">
-				Request submitted
+				Order submitted
 			</h2>
 			<p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-				Your request for{" "}
+				Your order for{" "}
 				<span className="font-medium text-foreground tabular-nums">
 					{request.cylinderQuantity} × {request.cylinderSizeKg}kg
 				</span>{" "}
-				is with the Soroman team. They'll price delivery and send a full quote —
-				it appears on your dashboard, and you pay once you accept it.
+				is with the Soroman team. They'll price delivery and confirm the full
+				price — it appears on your dashboard, and you pay once you accept it.
 			</p>
 
 			<p className="mt-6 text-[0.65rem] tracking-[0.2em] text-muted-foreground uppercase">
-				Request number
+				Order number
 			</p>
 			<p className="mt-1 text-lg font-semibold tracking-tight tabular-nums">
 				{request.requestNumber}

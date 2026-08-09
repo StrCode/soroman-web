@@ -24,6 +24,13 @@ const NAV = [
 	{ label: "Contact", to: "/contact", hash: undefined },
 ] as const;
 
+/**
+ * The icon buttons read as 28px, which is well under a comfortable thumb.
+ * They're ghost variants — transparent until hover — so widening the hit area
+ * on touch viewports costs nothing visually and only the target grows.
+ */
+const TOUCH_TARGET = "size-10 sm:size-7";
+
 export default function Header() {
 	const auth = useAuth();
 	const navigate = useNavigate();
@@ -146,7 +153,13 @@ export default function Header() {
 						{auth.status === "authed" && (
 							<DropdownMenu>
 								<DropdownMenuTrigger
-									render={<Button variant="ghost" size="icon-sm" />}
+									render={
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											className={TOUCH_TARGET}
+										/>
+									}
 								>
 									<CircleUserRound />
 									<span className="sr-only">Account</span>
@@ -194,6 +207,7 @@ export default function Header() {
 							<Button
 								variant="ghost"
 								size="icon-sm"
+								className={TOUCH_TARGET}
 								nativeButton={false}
 								render={
 									<Link to="/login">
@@ -220,7 +234,7 @@ export default function Header() {
 						<Button
 							variant="ghost"
 							size="icon-sm"
-							className="lg:hidden"
+							className={cn("lg:hidden", TOUCH_TARGET)}
 							aria-expanded={menuOpen}
 							aria-controls="mobile-nav"
 							onClick={() => setMenuOpen((o) => !o)}

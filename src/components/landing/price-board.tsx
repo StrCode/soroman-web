@@ -13,7 +13,12 @@ import {
 import type { Depot, DepotProduct } from "@/lib/api";
 
 import { type AppColumnDef, appTableFeatures } from "@/lib/table";
-import { formatNaira, useCatalog } from "@/lib/use-catalog";
+import {
+	canonicalProduct,
+	formatNaira,
+	PRODUCT_ORDER,
+	useCatalog,
+} from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,34 +32,9 @@ import { cn } from "@/lib/utils";
  * mobile card fallback, not a flat row list.
  */
 
-/** Canonical column order; anything new lands after these, A–Z. */
-const PRODUCT_ORDER = ["PMS", "AGO", "DPK", "ATK", "LPG"];
 const LOADING_ROWS = 6;
 /** Placeholder product columns while the catalog is still loading. */
 const LOADING_PRODUCTS = ["PMS", "AGO", "DPK"] as const;
-
-/**
- * Depots name the same fuel inconsistently — "PMS", "Pickup PMS", "PMS (Premium
- * Motor Spirit)", "Petrol" all mean petrol. Collapse each to one canonical fuel
- * so the board shows a single column per product (its main name) instead of a
- * sparse grid of near-duplicate columns. Unrecognized products keep their own
- * label so nothing is silently dropped.
- */
-const CANONICAL_FUELS: { key: string; name: string; match: RegExp }[] = [
-	{ key: "PMS", name: "Petrol", match: /\bpms\b|petrol|premium motor/i },
-	{ key: "AGO", name: "Diesel", match: /\bago\b|diesel|gas ?oil/i },
-	{ key: "DPK", name: "Kerosene", match: /\bdpk\b|kerosene|\bkero\b/i },
-	{ key: "ATK", name: "Jet A1", match: /\batk\b|jet\s?a1?|aviation/i },
-	{ key: "LPG", name: "Cooking gas", match: /\blpg\b|cooking gas|\bgas\b/i },
-];
-
-function canonicalProduct(p: DepotProduct): { key: string; name: string } {
-	const hay = `${p.abbreviation} ${p.name}`;
-	const hit = CANONICAL_FUELS.find((f) => f.match.test(hay));
-	return hit
-		? { key: hit.key, name: hit.name }
-		: { key: p.abbreviation, name: p.name };
-}
 
 type ProductColumn = { abbr: string; name: string };
 

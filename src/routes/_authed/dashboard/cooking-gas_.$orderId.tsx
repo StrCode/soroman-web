@@ -129,14 +129,14 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 	};
 
 	const statusLabel = quoteReady
-		? "Quote ready"
+		? "Price ready"
 		: (CG_STATUS_LABELS[request.status] ?? request.status);
 
 	const headerMeta = [
 		request.stationName || null,
 		request.deliveryState || null,
 		underReview ? "Submitted for review" : null,
-		quoteReady ? "Quote issued — pay to confirm" : null,
+		quoteReady ? "Price ready — pay to confirm" : null,
 		quoted && !unpaid ? "Paid" : null,
 	]
 		.filter(Boolean)
@@ -183,10 +183,10 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 								What&apos;s happening
 							</p>
 							<p className="mt-2.5 text-base font-medium tracking-tight">
-								The Soroman team is reviewing and pricing this request.
+								The Soroman team is reviewing and pricing this order.
 							</p>
 							<p className="mt-2 max-w-xl text-sm text-muted-foreground">
-								Nothing to pay yet. When a quote is ready, this page will show
+								Nothing to pay yet. When the price is ready, this page will show
 								the total and transfer details. Typical turnaround is 1–2
 								business days.
 							</p>
@@ -290,8 +290,8 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 							</p>
 							<p className="mt-2 text-sm text-muted-foreground">
 								{request.status === "Cancelled"
-									? "You withdrew this request. Submit a new one anytime."
-									: "This request didn't pass review. Contact support if you need help."}
+									? "You withdrew this order. Place a new one anytime."
+									: "This order didn't pass review. Contact support if you need help."}
 							</p>
 						</section>
 					)}
@@ -378,8 +378,8 @@ function CookingGasTimeline({ request }: { request: LpgOrderRequest }) {
 		const terminal = request.status === "Cancelled" ? "Cancelled" : "Rejected";
 		const note =
 			request.status === "Cancelled"
-				? "You withdrew this request."
-				: "This request didn't pass review.";
+				? "You withdrew this order."
+				: "This order didn't pass review.";
 		return (
 			<ol className="space-y-4">
 				<TimelineRow
@@ -416,7 +416,7 @@ function CookingGasTimeline({ request }: { request: LpgOrderRequest }) {
 			/>
 			<TimelineRow
 				done={approved}
-				label={approved ? "Quote issued" : "Under review"}
+				label={approved ? "Price ready" : "Under review"}
 				note={
 					approved
 						? "Delivery priced — review and pay."
@@ -430,7 +430,7 @@ function CookingGasTimeline({ request }: { request: LpgOrderRequest }) {
 					paid
 						? "Payment received"
 						: approved
-							? "Pay the quoted amount to confirm."
+							? "Pay the amount above to confirm."
 							: undefined
 				}
 			/>

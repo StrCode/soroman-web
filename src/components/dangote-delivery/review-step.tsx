@@ -22,7 +22,7 @@ import {
  * The last look before submission. Everything here comes from the client-side
  * draft — nothing exists server-side yet — and no price appears anywhere: the
  * quote is issued by the Dangote team after review. Accepting the terms is
- * required before the submit CTA unlocks.
+ * required before the submit CTA becomes available.
  */
 export default function ReviewStep({
 	details,
@@ -72,7 +72,7 @@ export default function ReviewStep({
 				))}
 			</dl>
 			<p className="mt-6 rounded-lg border border-foreground/10 bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
-				No payment is taken now. The Dangote team reviews your request, then
+				No payment is taken now. The Dangote team reviews your order, then
 				prices your order with delivery — you'll see it on your dashboard and
 				pay only if you accept it.
 			</p>
@@ -107,7 +107,7 @@ export default function ReviewStep({
 					<DialogHeader>
 						<DialogTitle>Soroman terms & conditions</DialogTitle>
 						<DialogDescription>
-							Please read these terms before submitting your order request.
+							Please read these terms before placing your order.
 						</DialogDescription>
 					</DialogHeader>
 					<div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 text-sm leading-relaxed text-muted-foreground">
@@ -136,16 +136,16 @@ function TermsBody() {
 	return (
 		<div className="flex flex-col gap-4">
 			<p>
-				These terms apply to Dangote Delivery order requests submitted through{" "}
+				These terms apply to Dangote Delivery orders submitted through{" "}
 				{COMPANY_NAME} (&quot;Soroman&quot;). By accepting, you agree to the
 				following for this order.
 			</p>
 			<div>
 				<h3 className="font-medium text-foreground">
-					1. Order request, not a sale
+					1. Order, not a confirmed sale
 				</h3>
 				<p className="mt-1.5">
-					Submitting this form places an order request only. No sale is made and
+					Submitting this form places an order only. No sale is made and
 					no payment is taken until Soroman prices the order and you choose to
 					pay and confirm it.
 				</p>
@@ -164,7 +164,7 @@ function TermsBody() {
 				<p className="mt-1.5">
 					Where a license is required, you are responsible for holding a valid
 					license for the product and destination stated. Soroman may verify
-					documents before pricing an order and may decline a request that fails
+					documents before pricing an order and may decline an order that fails
 					verification.
 				</p>
 			</div>
@@ -180,7 +180,7 @@ function TermsBody() {
 				<h3 className="font-medium text-foreground">5. Payment</h3>
 				<p className="mt-1.5">
 					Payment is due only if you accept the priced order. Until then you may
-					cancel the request from your dashboard. Paid orders follow
+					cancel the order from your dashboard. Paid orders follow
 					Soroman&apos;s standard fulfilment and collection process.
 				</p>
 			</div>
@@ -188,7 +188,7 @@ function TermsBody() {
 				<h3 className="font-medium text-foreground">6. Communication</h3>
 				<p className="mt-1.5">
 					You agree that Soroman may contact you by SMS, phone, or email about
-					this request, including status updates, prices, and payment
+					this order, including status updates, prices, and payment
 					instructions.
 				</p>
 			</div>

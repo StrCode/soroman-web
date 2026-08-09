@@ -27,7 +27,12 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
-import { api, type OrderDetail, type TrackingStage } from "@/lib/api";
+import {
+	api,
+	describePriceWindow,
+	type OrderDetail,
+	type TrackingStage,
+} from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import { ApiError } from "@/lib/http";
 import { seedDraftFromOrder } from "@/lib/order-draft";
@@ -67,17 +72,6 @@ const formatDate = (iso?: string) =>
 	iso
 		? new Date(iso).toLocaleDateString("en-NG", { dateStyle: "medium" })
 		: "—";
-
-/** Human remaining time on the price lock — "42 min" / "2h 10m". */
-function formatLockRemaining(iso: string): string {
-	const ms = Date.parse(iso) - Date.now();
-	if (Number.isNaN(ms) || ms <= 0) return "lock expired";
-	const mins = Math.round(ms / 60_000);
-	if (mins < 60) return `lock expires in ${mins} min`;
-	const h = Math.floor(mins / 60);
-	const m = mins % 60;
-	return m > 0 ? `lock expires in ${h}h ${m}m` : `lock expires in ${h}h`;
-}
 
 /**
  * Depot order detail — next-step (pay / status) + facts in the main column;
@@ -195,9 +189,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 		order.depot_name,
 		fulfilment,
 		`Placed ${formatDate(order.placed_at)}`,
-		unpaid && order.lock_expires_at
-			? formatLockRemaining(order.lock_expires_at)
-			: null,
+		unpaid ? describePriceWindow(order.lock_expires_at) : null,
 		order.payment_status === "paid" ? "Paid" : null,
 	]
 		.filter(Boolean)
@@ -241,7 +233,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 						<section className="overflow-hidden rounded-xl border border-amber-500/35 bg-card">
 							<div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-500/25 px-5 py-3.5">
 								<span className={cn(MICRO, "text-amber-700")}>
-									Next — pay before the lock expires
+									Next — pay while your price is valid
 								</span>
 								<span className="text-sm font-semibold tabular-nums">
 									{formatNaira(order.total)} due
@@ -311,8 +303,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 						<section className="rounded-xl border border-destructive/25 bg-destructive/5 p-5">
 							<p className={cn(MICRO, "text-destructive")}>Cancelled</p>
 							<p className="mt-2 text-sm text-muted-foreground">
-								This order was cancelled. Reorder anytime to lock today&apos;s
-								board price.
+								This order was cancelled. Reorder anytime at today&apos;s price.
 							</p>
 						</section>
 					)}
@@ -481,8 +472,8 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 					<DialogHeader>
 						<DialogTitle>Cancel {order.id}?</DialogTitle>
 						<DialogDescription>
-							Releases the reserved stock and price lock. This can&apos;t be
-							undone — reorder if you change your mind.
+							Releases the reserved stock and today&apos;s price. This
+							can&apos;t be undone — reorder if you change your mind.
 						</DialogDescription>
 					</DialogHeader>
 					{cancel.isError && (

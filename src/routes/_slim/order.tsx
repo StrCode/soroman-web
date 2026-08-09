@@ -5,7 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { formatPhoneForDisplay } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
-import { formatNaira, useCatalog } from "@/lib/use-catalog";
+import { canonicalProduct, formatNaira, useCatalog } from "@/lib/use-catalog";
+import { cn } from "@/lib/utils";
 
 /**
  * THE front door for ordering — the "between 1 & 5" concept: a slim left
@@ -30,14 +31,17 @@ function ChooseProductPage() {
 
 	// Cheapest live litre across open depots for the depot channel's "from"
 	// price — PMS and AGO both live behind that one door, so the honest number
-	// is the best of either board.
+	// is the best of either. Matched through canonicalProduct, not the raw
+	// abbreviation: depots that list petrol as "Petrol" or "Fuel" are still
+	// selling PMS, and reading them literally left this box claiming no price
+	// was published while the landing page showed those prices live.
 	const fromPrice = useMemo(() => {
 		const open = new Set(depots.filter((d) => d.is_open).map((d) => d.id));
 		let best: number | null = null;
 		for (const p of products) {
 			if (!p.available || !open.has(p.depot_id) || p.price <= 0) continue;
-			const code = p.abbreviation.toUpperCase();
-			if (code !== "PMS" && code !== "AGO") continue;
+			const key = canonicalProduct(p).key;
+			if (key !== "PMS" && key !== "AGO") continue;
 			if (best === null || p.price < best) best = p.price;
 		}
 		return best;
@@ -59,22 +63,22 @@ function ChooseProductPage() {
 
 	return (
 		<div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-x-6 px-4 pt-7 pb-16 sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:px-6 md:gap-x-8">
-			{/* The gutter: one back control — destination depends on session. */}
-			<aside className="mb-4 sm:mb-0">
-				<Link
-					to={auth.status === "authed" ? "/dashboard" : "/"}
-					aria-label={
-						auth.status === "authed" ? "Back to dashboard" : "Back to home"
-					}
-					className="ease-luxe flex size-11 items-center justify-center rounded-full border border-foreground/15 bg-card shadow-xs transition-colors duration-250 hover:border-foreground/30 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-				>
-					<ArrowLeft className="size-5" />
-				</Link>
+			{/*
+			 * The gutter: one back control — destination depends on session. Below
+			 * sm the gutter column collapses, so the control moves inline into the
+			 * session row rather than sitting alone above it on a line of its own.
+			 */}
+			<aside className="hidden sm:block">
+				<BackControl authed={auth.status === "authed"} />
 			</aside>
 
 			<main className="min-w-0">
 				{/* Session row: who's here, and the one action that fits. */}
-				<div className="mb-7 flex min-h-11 flex-wrap items-center justify-between gap-3">
+				<div className="mb-7 flex min-h-11 flex-wrap items-center gap-3">
+					<BackControl
+						authed={auth.status === "authed"}
+						className="sm:hidden"
+					/>
 					{customer ? (
 						<>
 							<div
@@ -93,7 +97,7 @@ function ChooseProductPage() {
 							</div>
 							<Link
 								to="/dashboard"
-								className="ease-luxe text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-foreground"
+								className="ease-luxe ml-auto text-sm font-medium text-muted-foreground transition-colors duration-250 hover:text-foreground"
 							>
 								Dashboard
 							</Link>
@@ -123,9 +127,9 @@ function ChooseProductPage() {
 				<h1 className="mt-2 text-3xl font-semibold tracking-tight md:text-4xl">
 					What are you ordering?
 				</h1>
-				<p className="mt-2.5 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
-					Three channels. Depot board, bulk quote, or cylinders — pick the box
-					that matches.
+				<p className="mt-2.5 max-w-lg text-sm leading-relaxed text-muted-foreground md:text-base">
+					Three ways to buy from Soroman. Pick the one that matches what you
+					need — we handle the rest from there.
 				</p>
 				{!customer && (
 					<p className="mt-3 max-w-lg text-sm leading-relaxed text-muted-foreground">
@@ -145,39 +149,61 @@ function ChooseProductPage() {
 					<ChannelBox
 						to="/order/depot"
 						idx="01"
-						title="Soroman Depot"
-						description="PMS & AGO at today's board price. Pickup or delivery after you lock the quote."
-						priceLabel="From today"
+						title="Buy from Soroman Depot"
+						description="Buy any product from our depots across Nigeria at today's prices. Collect it yourself, or let us deliver it to you."
+						priceLabel="Today's price"
 						priceValue={
 							isLoading
 								? null
 								: fromPrice !== null
 									? `${formatNaira(fromPrice)}/L`
-									: "Board opens soon"
+									: "Prices coming soon"
 						}
-						go="Enter →"
+						go="Order now →"
 					/>
 					<ChannelBox
 						to="/order/dangote-delivery"
 						idx="02"
 						title="Dangote Delivery"
-						description="Bulk ex-Dangote to site. Company documents in — quote after review."
-						priceLabel="Path"
-						priceValue="Quote request"
-						go="Request →"
+						description="Buy from Dangote Refinery directly through Soroman and have it delivered straight to your site — no queues, no hassle. Send your company details and we take it from there."
+						priceLabel="Delivered to site"
+						priceValue="Bulk orders"
+						go="Order now →"
 					/>
 					<ChannelBox
 						to="/order/cooking-gas"
 						idx="03"
 						title="Cooking Gas"
-						description="Cylinder refills to your door. Pick sizes, pay, track."
-						priceLabel="From"
+						description="Refill your cylinders without leaving the house. Pick the sizes you need, pay, and follow the delivery to your door."
+						priceLabel="Today's price"
 						priceValue="₦4,500/cyl"
-						go="Order →"
+						go="Order now →"
 					/>
 				</div>
 			</main>
 		</div>
+	);
+}
+
+/** The circular back control, shared by the gutter and the mobile session row. */
+function BackControl({
+	authed,
+	className,
+}: {
+	authed: boolean;
+	className?: string;
+}) {
+	return (
+		<Link
+			to={authed ? "/dashboard" : "/"}
+			aria-label={authed ? "Back to dashboard" : "Back to home"}
+			className={cn(
+				"ease-luxe flex size-11 shrink-0 items-center justify-center rounded-full border border-foreground/15 bg-card shadow-xs transition-colors duration-250 hover:border-foreground/30 hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+				className,
+			)}
+		>
+			<ArrowLeft className="size-5" />
+		</Link>
 	);
 }
 

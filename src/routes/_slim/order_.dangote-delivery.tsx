@@ -62,7 +62,7 @@ const STEP_COPY: Record<
 	account: {
 		title: "Your account",
 		description:
-			"A phone number saves this request to your account so you can track and pay.",
+			"A phone number saves this order to your account so you can track and pay.",
 	},
 	company: {
 		title: "Company & license",
@@ -71,12 +71,12 @@ const STEP_COPY: Record<
 	},
 	review: {
 		title: "Review & submit",
-		description: "Confirm your request, then submit it for review.",
+		description: "Confirm your order, then place it.",
 	},
 };
 
 /**
- * The Dangote Delivery wizard — a quote request built client-side until one
+ * The Dangote Delivery wizard — an order built client-side until one
  * POST. Guests verify on the account step (before company/licenses); signed-in
  * customers skip that step. Draft lives in sessionStorage until submit or exit.
  */
@@ -276,7 +276,7 @@ function DangoteDeliveryOrderPage() {
 							onClick: () => goTo("review"),
 						}
 					: {
-							label: "Submit order request",
+							label: "Place order",
 							busy,
 							disabled: !termsAccepted,
 							hint: "Accept the Soroman terms & conditions to submit",
@@ -307,7 +307,7 @@ function DangoteDeliveryOrderPage() {
 				<WizardBack to="/order" label="Order something else" />
 				<WizardHeading
 					title="Dangote Delivery"
-					subtitle="Request a bulk fuel order — price confirmed after review."
+					subtitle="Bulk fuel delivered to your site — price confirmed after review."
 				/>
 				<Card className="mx-auto mt-6 w-full max-w-2xl">
 					<CardContent className="pt-2">
@@ -327,7 +327,7 @@ function DangoteDeliveryOrderPage() {
 			/>
 			<WizardHeading
 				title="Dangote Delivery"
-				subtitle="Request a bulk fuel order — price confirmed after review."
+				subtitle="Bulk fuel delivered to your site — price confirmed after review."
 			/>
 
 			<div className="mt-6">

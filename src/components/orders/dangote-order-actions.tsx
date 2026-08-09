@@ -176,7 +176,7 @@ export function DangoteQuoteDialog({
 						</div>
 					) : (
 						<p className="text-xs text-muted-foreground">
-							Transfer details aren&apos;t available yet. Open the request or
+							Transfer details aren&apos;t available yet. Open the order or
 							try again in a moment.
 						</p>
 					)}
@@ -231,7 +231,7 @@ export function DangoteQuoteDialog({
 						Close
 					</Button>
 					<Button className="cursor-pointer" onClick={openDetail}>
-						Open request
+						Open order
 					</Button>
 				</DialogFooter>
 			</DialogContent>
@@ -307,7 +307,7 @@ export function DangoteOrderActions({
 									variant="destructive"
 									onClick={() => setCancelOpen(true)}
 								>
-									Cancel request
+									Cancel order
 								</DropdownMenuItem>
 							</>
 						)}
@@ -334,15 +334,15 @@ export function DangoteOrderActions({
 						<DialogTitle>Cancel {request.requestNumber}?</DialogTitle>
 						<DialogDescription>
 							{request.status === "Approved"
-								? "Withdraws this order. You can submit a new request anytime."
-								: "Pulls the request out of review. You can submit a new one anytime."}
+								? "Withdraws this order. You can place a new order anytime."
+								: "Pulls the order out of review. You can place a new one anytime."}
 						</DialogDescription>
 					</DialogHeader>
 					{cancel.isError && (
 						<p className="px-5 text-xs text-destructive">
 							{cancel.error instanceof ApiError
 								? cancel.error.message
-								: "Could not cancel this request."}
+								: "Could not cancel this order."}
 						</p>
 					)}
 					<DialogFooter>
@@ -352,7 +352,7 @@ export function DangoteOrderActions({
 							disabled={cancel.isPending}
 							onClick={() => setCancelOpen(false)}
 						>
-							Keep request
+							Keep order
 						</Button>
 						<Button
 							variant="destructive"
@@ -360,7 +360,7 @@ export function DangoteOrderActions({
 							disabled={cancel.isPending}
 							onClick={() => cancel.mutate()}
 						>
-							{cancel.isPending ? "Cancelling…" : "Cancel request"}
+							{cancel.isPending ? "Cancelling…" : "Cancel order"}
 						</Button>
 					</DialogFooter>
 				</DialogContent>

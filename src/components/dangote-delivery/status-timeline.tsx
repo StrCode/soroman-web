@@ -10,7 +10,7 @@ const formatDate = (iso?: string | null) =>
 		: undefined;
 
 /**
- * The request's life drawn from its status stamps: submitted → reviewed
+ * The order's life drawn from its status stamps: submitted → reviewed
  * (order ready) → paid → dispatched → collected. Rejection replaces the
  * tail with a single terminal marker.
  */
@@ -23,9 +23,9 @@ export default function StatusTimeline({
 		const terminal = request.status === "Cancelled" ? "Cancelled" : "Rejected";
 		const note =
 			request.status === "Cancelled"
-				? (formatDate(request.updatedAt) ?? "You withdrew this request.")
+				? (formatDate(request.updatedAt) ?? "You withdrew this order.")
 				: (formatDate(request.reviewedAt) ??
-					"This request didn't pass review.");
+					"This order didn't pass review.");
 		return (
 			<ol className="space-y-4">
 				<TimelineRow
@@ -66,7 +66,7 @@ export default function StatusTimeline({
 			done: approved,
 			note: approved
 				? formatDate(request.reviewedAt)
-				: "The Dangote team is reviewing and pricing your request.",
+				: "The Dangote team is reviewing and pricing your order.",
 		},
 		{
 			label: "Payment",

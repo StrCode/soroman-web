@@ -111,7 +111,7 @@ export default function NextSteps({ orderId }: { orderId: string }) {
 						/>
 					</div>
 					<p className="mt-2.5 text-[0.65rem] leading-relaxed text-muted-foreground/70">
-						The desk answers {LOADING_HOURS}. Quote invoice {orderId} and we'll
+						The desk answers {LOADING_HOURS}. Mention invoice {orderId} and we'll
 						pull it up — or email {SUPPORT_EMAIL}.
 					</p>
 				</div>

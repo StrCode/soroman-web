@@ -491,6 +491,41 @@ export const PRICE_LOCK_MS = 4 * 60 * 60 * 1000;
 export const PRICE_LOCK_HOURS = PRICE_LOCK_MS / 3_600_000;
 
 /**
+ * The clock time an order's price stays valid until — "06:42 pm".
+ *
+ * Shown as an absolute time rather than a countdown: the window is four hours,
+ * and "valid till 6:42 pm" is something a buyer can plan a bank transfer
+ * around, where "03:58:21 left" is only noise until the last few minutes.
+ */
+export function formatPriceValidUntil(iso: string | undefined): string | null {
+	if (!iso) return null;
+	const t = Date.parse(iso);
+	if (Number.isNaN(t)) return null;
+	return new Date(t).toLocaleTimeString("en-NG", {
+		hour: "2-digit",
+		minute: "2-digit",
+	});
+}
+
+/** True once the order's price window has passed. */
+export function isPriceExpired(iso: string | undefined): boolean {
+	if (!iso) return false;
+	const t = Date.parse(iso);
+	return !Number.isNaN(t) && t <= Date.now();
+}
+
+/**
+ * The inline phrase the order lists append to a row's meta line —
+ * "price valid till 06:42 pm", or "price expired" once it has passed.
+ * Null when the order carries no window at all.
+ */
+export function describePriceWindow(iso: string | undefined): string | null {
+	const until = formatPriceValidUntil(iso);
+	if (!until) return null;
+	return isPriceExpired(iso) ? "price expired" : `price valid till ${until}`;
+}
+
+/**
  * A server order row → the OrderRecord the dashboard and history render. The
  * backend is one product per order, so an order is always a single line. The
  * trade badge is the product's category (PMS/AGO) when the backend sends it,

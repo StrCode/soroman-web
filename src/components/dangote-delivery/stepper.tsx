@@ -53,7 +53,7 @@ export default function DangoteDeliveryStepper({
 
 	return (
 		<nav
-			aria-label="Order request progress"
+			aria-label="Order progress"
 			className="relative mx-auto w-full max-w-3xl px-2"
 		>
 			<div

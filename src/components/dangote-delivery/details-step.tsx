@@ -178,7 +178,7 @@ export default function DetailsStep({ form }: DetailsStepProps) {
 								<FieldError meta={field.state.meta} id="co-quantity-error" />
 								{quantity > 0 && (
 									<p className="text-xs text-muted-foreground tabular-nums">
-										Requesting{" "}
+										Ordering{" "}
 										<span className="font-medium text-foreground">
 											{quantity.toLocaleString()} {meta.unitShort}
 										</span>{" "}

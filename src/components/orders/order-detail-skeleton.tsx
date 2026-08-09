@@ -34,7 +34,7 @@ export function OrderDetailSkeleton() {
 						</div>
 					</div>
 
-					{/* Summary / request facts */}
+					{/* Summary / order facts */}
 					<div className="rounded-xl border border-foreground/15 p-5">
 						<Skeleton className="h-3 w-24" />
 						<div className="mt-4 space-y-3">

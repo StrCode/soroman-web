@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PRICE_LOCK_HOURS } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatNaira, useCatalog } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -91,15 +92,22 @@ export default function Hero() {
 
 	return (
 		<section className="border-b border-foreground/15">
-			<div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-20 sm:px-6 md:py-28 lg:grid-cols-12 lg:items-center lg:gap-16">
-				<div className="lg:col-span-6">
+			{/*
+			 * min-w-0 on both columns is load-bearing, not decoration: a grid item
+			 * defaults to min-width:auto, so the track is floored at the snapshot's
+			 * min-content width (its rows carry a fixed price column and a nowrap
+			 * truncating depot name). Without it the whole page is forced ~630px
+			 * wide on a 375px phone and every section inherits the overflow.
+			 */}
+			<div className="mx-auto grid w-full max-w-6xl gap-12 px-4 py-16 sm:px-6 md:py-28 lg:grid-cols-12 lg:items-center lg:gap-16">
+				<div className="min-w-0 lg:col-span-6">
 					<div className="flex items-center gap-4">
 						<span className="h-px w-8 bg-foreground md:w-12" aria-hidden />
 						<span className="text-xs tracking-[0.3em] text-muted-foreground uppercase">
 							Order Fuel in Minutes
 						</span>
 					</div>
-					<h1 className="mt-8 text-5xl leading-[0.95] tracking-tight text-balance md:text-6xl">
+					<h1 className="mt-8 text-4xl leading-[1.02] tracking-tight text-balance sm:text-5xl sm:leading-[0.95] md:text-6xl">
 						{/* Inter's italic is not loaded by choice; emphasis is weight. */}
 						Buy Fuel Directly from{" "}
 						<em className="font-semibold text-accent not-italic">Soroman.</em>
@@ -114,7 +122,10 @@ export default function Hero() {
 					 * the header hides its own Start an order so the two never
 					 * duplicate. See components/header.tsx.
 					 */}
-					<div data-hero-cta className="mt-12 flex flex-wrap gap-4">
+					<div
+						data-hero-cta
+						className="mt-10 flex flex-wrap gap-3 md:mt-12 md:gap-4"
+					>
 						<Button
 							size="lg"
 							nativeButton={false}
@@ -129,7 +140,7 @@ export default function Hero() {
 					</div>
 				</div>
 
-				<div className="lg:col-span-6">
+				<div className="min-w-0 lg:col-span-6">
 					{isLoading ? (
 						<div className="overflow-hidden rounded-xl border border-foreground/15 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
 							<div className="flex items-center justify-between border-b border-foreground/15 px-6 py-4">
@@ -282,7 +293,7 @@ function MarketSnapshot({
 				setPaused(false);
 			}}
 		>
-			<div className="flex items-center justify-between border-b border-foreground/15 px-6 py-4">
+			<div className="flex items-center justify-between border-b border-foreground/15 px-4 py-4 sm:px-6">
 				<span className="text-xs tracking-[0.25em] uppercase">
 					Market snapshot
 				</span>
@@ -314,7 +325,7 @@ function MarketSnapshot({
 			))}
 
 			<div
-				className="bg-muted/60 px-6 py-3"
+				className="bg-muted/60 px-4 py-3 sm:px-6"
 				onMouseEnter={cancelClosePanel}
 				onMouseLeave={scheduleClosePanel}
 			>
@@ -334,7 +345,7 @@ function MarketSnapshot({
 							})}
 						</>
 					)}
-					{" · Price locked 1 hr once you order"}
+					{` · Price valid ${PRICE_LOCK_HOURS} hours from the time you order`}
 				</p>
 				<div
 					className="ease-luxe grid transition-[grid-template-rows] duration-[280ms]"
@@ -415,7 +426,7 @@ function SnapshotRow({
 					</p>
 				</div>
 				<p className="mt-1.5 text-[0.6rem] tracking-[0.12em] text-muted-foreground/70 uppercase">
-					{row.quotes.length} of {openDepotCount} quoting
+					Priced at {row.quotes.length} of {openDepotCount} depots
 					{best && (
 						<span
 							className={cn(
@@ -434,13 +445,13 @@ function SnapshotRow({
 
 			<div
 				className={cn(
-					"flex min-w-[9rem] shrink-0 flex-col items-end gap-1.5 text-right",
+					"flex shrink-0 flex-col items-end gap-1.5 text-right sm:min-w-[9rem]",
 					fadeClass,
 				)}
 			>
 				{shownQuote ? (
 					<>
-						<p className="text-2xl leading-none font-semibold tracking-tight tabular-nums">
+						<p className="text-xl leading-none font-semibold tracking-tight tabular-nums sm:text-2xl">
 							{formatNaira(shownQuote.price)}
 							<span className="ml-0.5 text-xs font-normal text-muted-foreground">
 								/{row.unit}
@@ -457,14 +468,14 @@ function SnapshotRow({
 					</>
 				) : (
 					<>
-						<p className="text-2xl leading-none font-semibold text-muted-foreground/40 tabular-nums">
+						<p className="text-xl leading-none font-semibold text-muted-foreground/40 tabular-nums sm:text-2xl">
 							—
 							<span className="ml-0.5 text-xs font-normal text-muted-foreground/30">
 								/{row.unit}
 							</span>
 						</p>
 						<StatusChip tone="muted">
-							{best ? "Not quoting" : "Awaiting price"}
+							{best ? "No price today" : "Awaiting price"}
 						</StatusChip>
 					</>
 				)}
@@ -473,7 +484,7 @@ function SnapshotRow({
 	);
 
 	const rowClass = cn(
-		"snapshot-rise group flex items-center justify-between gap-5 border-b border-foreground/15 px-6 py-4",
+		"snapshot-rise group flex items-center justify-between gap-3 border-b border-foreground/15 px-4 py-4 sm:gap-5 sm:px-6",
 		"transition-colors duration-250 ease-luxe hover:bg-muted/40 active:bg-muted/60",
 	);
 	const style = { animationDelay: `${entranceDelay}ms` };
@@ -547,7 +558,7 @@ function ContextPanel({ row }: { row: ProductRow }) {
 	if (row.quotes.length === 1) {
 		return (
 			<p className="text-xs text-muted-foreground">
-				Only {bestDepot} is quoting {row.name.toLowerCase()} today.
+				Only {bestDepot} has a price for {row.name.toLowerCase()} today.
 			</p>
 		);
 	}

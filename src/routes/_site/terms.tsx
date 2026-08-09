@@ -35,7 +35,7 @@ const SECTIONS = [
 	{
 		title: "Orders, pricing, and payment",
 		body: [
-			"Browsing and building an order does not create a binding sale until you confirm and pay as instructed on your invoice. Depot prices move through the day; the price locked on your order is honoured for the validity window shown at checkout (typically one hour from order).",
+			"Browsing and building an order does not create a binding sale until you confirm and pay as instructed on your invoice. Depot prices move through the day; the price on your order is honoured for the validity window shown at checkout (typically four hours from order).",
 			"Payment is by bank transfer to the account on your invoice. Payments are matched to your order automatically. Underpayment leaves a balance due; overpayment may be refunded or held as credit at your choice. Unpaid orders may be cancelled after the period stated at checkout (typically 12 hours), with notice where practicable.",
 			"Quantities may be split across trucks (for example at 60,000 litres each). You will see the truck count before you confirm where that applies.",
 		],
@@ -48,11 +48,11 @@ const SECTIONS = [
 		],
 	},
 	{
-		title: "Order requests (including Dangote Delivery)",
+		title: "Orders priced after review (including Dangote Delivery)",
 		body: [
-			"Some flows, including Dangote Delivery, submit an order request only. No sale is made and no payment is taken until Soroman prices the request and you choose to pay and confirm it.",
-			"You confirm that company details, contact information, delivery address, product, quantity, and any required licence (for example DPR / NUPRC) are true and complete. False or incomplete information may delay or cancel the request. Where a licence is required, you are responsible for holding a valid one; Soroman may verify documents and decline requests that fail verification.",
-			"Any price shown after review is set by Soroman and may expire, change with market conditions, or be withdrawn before you pay. Delivery timing and logistics are confirmed only after payment. Until you pay, you may cancel the request from your dashboard where that option is available.",
+			"Some flows, including Dangote Delivery, place an order for review only. No sale is made and no payment is taken until Soroman prices the order and you choose to pay and confirm it.",
+			"You confirm that company details, contact information, delivery address, product, quantity, and any required licence (for example DPR / NUPRC) are true and complete. False or incomplete information may delay or cancel the order. Where a licence is required, you are responsible for holding a valid one; Soroman may verify documents and decline orders that fail verification.",
+			"Any price shown after review is set by Soroman and may expire, change with market conditions, or be withdrawn before you pay. Delivery timing and logistics are confirmed only after payment. Until you pay, you may cancel the order from your dashboard where that option is available.",
 		],
 	},
 	{

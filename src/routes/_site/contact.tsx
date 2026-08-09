@@ -87,7 +87,7 @@ function ContactPage() {
 						<h2 className="text-2xl">Where we load</h2>
 						<p className="mt-2 text-sm leading-relaxed text-muted-foreground">
 							Six depots across four states. Live prices and stock for each are
-							on the depot price board.
+							on the depot prices page.
 						</p>
 						<ul className="mt-6">
 							{DEPOT_LOCATIONS.map(({ name, state }) => (

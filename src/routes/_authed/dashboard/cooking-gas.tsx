@@ -20,15 +20,15 @@ export const Route = createFileRoute("/_authed/dashboard/cooking-gas")({
 	component: CookingGasOrdersPage,
 });
 
-/** Customer-facing names for the request's wire statuses. */
+/** Customer-facing names for the order's wire statuses. */
 export const CG_STATUS_LABELS: Record<string, string> = {
 	"Pending Review": "Under review",
-	Approved: "Quote ready",
+	Approved: "Price ready",
 	Rejected: "Rejected",
 	Cancelled: "Cancelled",
 };
 
-/** Chip tone: rejection alerts, an issued quote reads positive. */
+/** Chip tone: rejection alerts, a confirmed price reads positive. */
 export function cgStatusTone(status: string): string {
 	if (status === "Rejected" || status === "Cancelled") {
 		return "border-destructive/30 bg-destructive/10 text-destructive";
@@ -67,7 +67,7 @@ const FILTERS: {
 	},
 ];
 
-/** The quote column: a price once approved, "Pending" while under review. */
+/** The price column: a figure once approved, "Pending" while under review. */
 function quoteText(request: LpgOrderRequest): string {
 	if (request.totalAmount != null) {
 		const amount = formatNaira(Number(request.totalAmount));
@@ -115,8 +115,8 @@ const columns: AppColumnDef<LpgOrderRequest>[] = [
 		),
 	},
 	{
-		id: "quote",
-		header: "Quote",
+		id: "price",
+		header: "Price",
 		meta: { className: "text-right" },
 		cell: ({ row }) => (
 			<span className="tabular-nums">{quoteText(row.original)}</span>
@@ -139,7 +139,7 @@ const columns: AppColumnDef<LpgOrderRequest>[] = [
 					)}
 				>
 					{ready
-						? "Quote ready"
+						? "Price ready"
 						: (CG_STATUS_LABELS[row.original.status] ?? row.original.status)}
 				</span>
 			);
@@ -166,7 +166,7 @@ const columns: AppColumnDef<LpgOrderRequest>[] = [
 
 /**
  * Cooking-gas desk: purpose line + how-it-works, pipeline counts, attention
- * strip for unpaid approved quotes, filter tabs, then the table. Counts come
+ * strip for unpaid priced orders, filter tabs, then the table. Counts come
  * from lightweight status-filtered list calls; the table is server-paginated.
  */
 function CookingGasOrdersPage() {
@@ -265,11 +265,11 @@ function CookingGasOrdersPage() {
 						<em className="font-semibold text-accent not-italic">gas</em>.
 					</h1>
 					<p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground md:text-base">
-						Cylinder refills delivered to your door — request a quote, the
+						Cylinder refills delivered to your door — place your order, the
 						Soroman team prices delivery, then you pay to confirm.
 					</p>
 					<p className="mt-2 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs text-muted-foreground">
-						<span>Request</span>
+						<span>Order</span>
 						<span aria-hidden className="opacity-40">
 							→
 						</span>
@@ -277,7 +277,7 @@ function CookingGasOrdersPage() {
 						<span aria-hidden className="opacity-40">
 							→
 						</span>
-						<span>Quote ready</span>
+						<span>Price ready</span>
 						<span aria-hidden className="opacity-40">
 							→
 						</span>
@@ -328,7 +328,7 @@ function CookingGasOrdersPage() {
 							Needs your attention
 						</span>
 						<span className="font-mono text-[0.65rem] tracking-widest text-accent/80 uppercase tabular-nums">
-							Quote ready
+							Price ready
 						</span>
 					</div>
 					<div>
@@ -352,7 +352,7 @@ function CookingGasOrdersPage() {
 										{request.cylinderQuantity} × {request.cylinderSizeKg}kg
 										{request.stationName ? ` · ${request.stationName}` : ""}
 										{request.deliveryState ? ` · ${request.deliveryState}` : ""}
-										{" · quote issued"}
+										{" · price ready"}
 									</p>
 								</div>
 								<p className="text-sm font-bold tabular-nums">
@@ -361,7 +361,7 @@ function CookingGasOrdersPage() {
 										: "—"}
 								</p>
 								<span className="text-xs font-semibold text-accent sm:text-right">
-									View quote →
+									View price →
 								</span>
 							</button>
 						))}
@@ -403,7 +403,7 @@ function CookingGasOrdersPage() {
 					}
 					emptyDescription={
 						isEmptyAll
-							? "Cylinder refills delivered to your door — request a quote, the Soroman team prices delivery, then you pay to confirm."
+							? "Cylinder refills delivered to your door — place your order, the Soroman team prices delivery, then you pay to confirm."
 							: undefined
 					}
 					emptyAction={

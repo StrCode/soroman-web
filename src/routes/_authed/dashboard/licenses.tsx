@@ -47,7 +47,7 @@ const isExpired = (license: CustomerLicense) =>
 
 /**
  * A lapsed license reads as Expired regardless of what verification said —
- * that's the fact that decides whether it can back a quote.
+ * that's the fact that decides whether it can back an order.
  */
 function chipFor(license: CustomerLicense): { label: string; tone: string } {
 	if (isExpired(license)) {
@@ -251,7 +251,7 @@ function LicensesPage() {
 					</h1>
 					<p className="mt-3 max-w-xl text-sm text-muted-foreground">
 						The Soroman team verifies each license once; a verified, unexpired
-						license can back any Dangote quote request without another upload.
+						license can back any Dangote order without another upload.
 					</p>
 				</div>
 				<AddLicenseDialog />
@@ -296,7 +296,7 @@ function LicensesPage() {
 					}
 					emptyDescription={
 						filter === "all"
-							? "Add your DPR/NUPRC license with the button above, or attach one during a Dangote quote request."
+							? "Add your DPR/NUPRC license with the button above, or attach one while placing a Dangote order."
 							: "Switch to All to see the full register."
 					}
 					pagination={
@@ -390,7 +390,7 @@ function AddLicenseDialog() {
 					<DialogTitle>Add a license</DialogTitle>
 					<DialogDescription>
 						PDF, JPG, or PNG — up to 10MB. The Soroman team verifies it before
-						it can back a quote.
+						it can back an order.
 					</DialogDescription>
 				</DialogHeader>
 

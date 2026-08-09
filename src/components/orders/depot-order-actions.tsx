@@ -22,7 +22,12 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
-import { api, type OrderRecord, type VirtualAccount } from "@/lib/api";
+import {
+	api,
+	formatPriceValidUntil,
+	type OrderRecord,
+	type VirtualAccount,
+} from "@/lib/api";
 import { ApiError } from "@/lib/http";
 import { seedDraftFromOrder } from "@/lib/order-draft";
 import { formatNaira } from "@/lib/use-catalog";
@@ -99,7 +104,7 @@ export function DepotPayDialog({ order, open, onOpenChange }: PayDialogProps) {
 					<DialogDescription>
 						{formatNaira(order.total)} due
 						{order.lock_expires_at
-							? " — settle before the price lock ends."
+							? ` — price valid till ${formatPriceValidUntil(order.lock_expires_at)}.`
 							: "."}
 					</DialogDescription>
 				</DialogHeader>
@@ -282,8 +287,8 @@ export function DepotOrderActions({ order }: { order: OrderRecord }) {
 					<DialogHeader>
 						<DialogTitle>Cancel {order.id}?</DialogTitle>
 						<DialogDescription>
-							Releases the reserved stock and price lock. This can&apos;t be
-							undone — reorder if you change your mind.
+							Releases the reserved stock and today&apos;s price. This
+							can&apos;t be undone — reorder if you change your mind.
 						</DialogDescription>
 					</DialogHeader>
 					{cancel.isError && (
