@@ -30,10 +30,21 @@ export const optionalEmailSchema = z
 		"Enter a valid email address, or leave it empty.",
 	);
 
-/** Matches the backend's minimum; strength beyond this nudges, never gates. */
-export const passwordSchema = z
+/**
+ * Sign-in takes either identifier in one box. An "@" is the only thing that
+ * tells them apart — a phone number can never contain one.
+ */
+export const identifierSchema = z
 	.string()
-	.min(8, "Password must be at least 8 characters.");
+	.trim()
+	.min(1, "Enter your email address or phone number.")
+	.refine(
+		(v) =>
+			v.includes("@")
+				? z.email().safeParse(v).success
+				: normalizePhone(v) !== null,
+		"Enter a valid email address or phone number.",
+	);
 
 export const pinSchema = z
 	.string()

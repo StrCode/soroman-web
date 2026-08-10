@@ -39,7 +39,7 @@ type OtpLoginProps = {
 	 * phone number, pass it here so the customer goes straight to the code.
 	 */
 	initialPhone?: string;
-	/** Renders the "Use email instead" toggle in the first step's label row. */
+	/** Renders the "Use your PIN instead" toggle in the first step's label row. */
 	onSwitchMethod?: () => void;
 	/**
 	 * Overrides the phone step's heading and intro — the login page's "Sign in
@@ -205,7 +205,7 @@ export default function OtpLogin({
 										className="text-xs text-accent hover:underline"
 										onClick={onSwitchMethod}
 									>
-										Use email instead
+										Use your PIN instead
 									</button>
 								)}
 							</div>
@@ -359,7 +359,7 @@ export default function OtpLogin({
 			<nameForm.Field name="companyName">
 				{(field) => (
 					<div className="grid gap-1.5">
-						<Label htmlFor="company">Company name (optional)</Label>
+						<Label htmlFor="company">Company name</Label>
 						<Input
 							id="company"
 							autoComplete="organization"

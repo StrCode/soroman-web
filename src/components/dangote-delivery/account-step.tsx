@@ -296,8 +296,7 @@ export default function AccountStep({
 							/>
 							<FieldError meta={field.state.meta} id="da-email-error" />
 							<p className="text-xs text-muted-foreground">
-								Saved to your profile for receipts and updates — not used to
-								sign in.
+								Used for receipts and updates — and to sign in with your PIN.
 							</p>
 						</div>
 					)}

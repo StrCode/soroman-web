@@ -78,7 +78,7 @@ export default function NextSteps({ orderId }: { orderId: string }) {
 
 				<div className="border-b px-5 py-4">
 					<p className="text-[0.65rem] tracking-[0.22em] text-muted-foreground uppercase">
-						Need a hand?
+						Need help?
 					</p>
 					<div className="mt-3 flex flex-wrap gap-2">
 						<Button

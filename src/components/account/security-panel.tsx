@@ -4,16 +4,15 @@ import { Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { PasswordInput, StrengthMeter } from "@/components/auth/email-login";
 import { MICRO, PANEL } from "@/components/dashboard/panel";
 import { FieldError, showFieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiError, api, type Customer, formatPhoneForDisplay } from "@/lib/api";
-import { authStore, useAuth } from "@/lib/auth";
-import { emailSchema, passwordSchema, pinSchema } from "@/lib/validation";
+import { ApiError, api, formatPhoneForDisplay } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { pinSchema } from "@/lib/validation";
 
 const pinSetSchema = z
 	.object({ pin: pinSchema, confirm: z.string() })
@@ -21,13 +20,6 @@ const pinSetSchema = z
 		message: "The PINs don't match.",
 		path: ["confirm"],
 	});
-
-const emailSignInSchema = z.object({
-	email: emailSchema,
-	password: passwordSchema,
-});
-
-const changePasswordSchema = z.object({ password: passwordSchema });
 
 function VerifiedChip() {
 	return (
@@ -47,12 +39,9 @@ export function SecurityPanel() {
 	const auth = useAuth();
 	const customer = auth.status === "authed" ? auth.customer : null;
 	const queryClient = useQueryClient();
-	const [addingEmail, setAddingEmail] = useState(false);
-	const [changingPassword, setChangingPassword] = useState(false);
 
-	// The session payload never says which methods are configured — /identities
-	// is the truth, so the email/password/PIN state reads from here, not from
-	// the in-memory customer.
+	// The session payload never says whether a PIN is configured — /identities
+	// is the truth, so that state reads from here, not the in-memory customer.
 	const { data: identities, isPending: identitiesPending } = useQuery({
 		queryKey: ["identities"],
 		queryFn: api.me.identities,
@@ -61,7 +50,6 @@ export function SecurityPanel() {
 
 	if (!customer) return null;
 
-	const hasPassword = identities?.hasPassword ?? false;
 	const hasPin = identities?.hasPin ?? false;
 	const refreshIdentities = () =>
 		void queryClient.invalidateQueries({ queryKey: ["identities"] });
@@ -71,7 +59,7 @@ export function SecurityPanel() {
 			<div className="flex items-baseline justify-between gap-4 border-b border-foreground/15 px-6 py-4">
 				<span className={MICRO}>Methods</span>
 				<span className="text-xs text-muted-foreground">
-					Phone · email · PIN
+					Phone or email · PIN
 				</span>
 			</div>
 
@@ -82,7 +70,7 @@ export function SecurityPanel() {
 					</p>
 					<p className="mt-1 text-sm text-muted-foreground tabular-nums">
 						{customer.phone
-							? `${formatPhoneForDisplay(customer.phone)} · one-time code by SMS`
+							? `${formatPhoneForDisplay(customer.phone)} · with your PIN, or a one-time code by SMS`
 							: "Not set. The desk can add one for you"}
 					</p>
 				</div>
@@ -97,65 +85,21 @@ export function SecurityPanel() {
 				<SecurityIdentitiesSkeleton />
 			) : (
 				<>
-					<div className="border-b border-foreground/15">
-						<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-5">
-							<div>
-								<p className="flex items-center gap-2 text-sm font-medium">
-									Email sign-in {hasPassword && <VerifiedChip />}
-								</p>
-								<p className="mt-1 text-sm text-muted-foreground">
-									{hasPassword
-										? customer.email
-											? `${customer.email} · password`
-											: "Email & password set"
-										: customer.email
-											? `${customer.email} is on your profile — add a password to sign in with it`
-											: "Not set. Add an email and password"}
-								</p>
-							</div>
-							{!hasPassword && (
-								<button
-									type="button"
-									className="text-sm font-medium text-accent hover:underline"
-									onClick={() => setAddingEmail((v) => !v)}
-								>
-									{addingEmail ? "Cancel" : customer.email ? "Enable" : "Add"}
-								</button>
-							)}
+					<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-foreground/15 px-6 py-5">
+						<div>
+							<p className="flex items-center gap-2 text-sm font-medium">
+								Email {customer.email && <VerifiedChip />}
+							</p>
+							<p className="mt-1 text-sm text-muted-foreground">
+								{customer.email
+									? `${customer.email} · with your PIN`
+									: "Not set. Add one to sign in with it instead of your phone"}
+							</p>
 						</div>
-						{addingEmail && !hasPassword && (
-							<AddEmailSignIn
-								customer={customer}
-								onDone={() => {
-									setAddingEmail(false);
-									refreshIdentities();
-								}}
-							/>
-						)}
+						<span className="text-xs text-muted-foreground">
+							{customer.email ? "Change in Profile" : "Add in Profile"}
+						</span>
 					</div>
-
-					{hasPassword && (
-						<div className="border-b border-foreground/15">
-							<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 py-5">
-								<div>
-									<p className="text-sm font-medium">Password</p>
-									<p className="mt-1 text-sm text-muted-foreground">
-										Used with your email to sign in
-									</p>
-								</div>
-								<button
-									type="button"
-									className="text-sm font-medium text-accent hover:underline"
-									onClick={() => setChangingPassword((v) => !v)}
-								>
-									{changingPassword ? "Cancel" : "Update"}
-								</button>
-							</div>
-							{changingPassword && (
-								<ChangePassword onDone={() => setChangingPassword(false)} />
-							)}
-						</div>
-					)}
 
 					<SetPinRow hasPin={hasPin} onChanged={refreshIdentities} />
 				</>
@@ -303,181 +247,5 @@ function SetPinRow({
 				</form>
 			)}
 		</div>
-	);
-}
-
-/**
- * Add email + password sign-in to the account. Being signed in IS the proof
- * of ownership, so the backend takes the email and password directly — there
- * is no emailed code to confirm the address.
- */
-function AddEmailSignIn({
-	customer,
-	onDone,
-}: {
-	customer: Customer;
-	onDone: () => void;
-}) {
-	const [error, setError] = useState<string | null>(null);
-	const [busy, setBusy] = useState(false);
-
-	const form = useForm({
-		defaultValues: { email: customer.email ?? "", password: "" },
-		validators: { onChange: emailSignInSchema },
-		onSubmit: async ({ value }) => {
-			setBusy(true);
-			setError(null);
-			try {
-				const updated = await api.me.addEmailSignIn(
-					value.email.trim(),
-					value.password,
-				);
-				authStore.customerUpdated(updated);
-				toast.success("Email sign-in added");
-				onDone();
-			} catch (err) {
-				setError(
-					err instanceof ApiError ? err.message : "Couldn't add it. Try again.",
-				);
-			} finally {
-				setBusy(false);
-			}
-		},
-	});
-
-	const hasProfileEmail = Boolean(customer.email);
-
-	return (
-		<form
-			onSubmit={(e) => {
-				e.preventDefault();
-				void form.handleSubmit();
-			}}
-			className="grid gap-4 border-t border-foreground/15 bg-muted/30 px-6 py-5 sm:grid-cols-2"
-		>
-			<form.Field name="email">
-				{(field) => (
-					<div className="grid gap-1.5">
-						<Label htmlFor="signin-email">Email</Label>
-						<Input
-							id="signin-email"
-							type="email"
-							autoComplete="email"
-							placeholder="name@company.com"
-							value={field.state.value}
-							onChange={(e) => field.handleChange(e.target.value)}
-							onBlur={field.handleBlur}
-							aria-invalid={showFieldError(field.state.meta) || undefined}
-							aria-describedby="signin-email-error"
-							autoFocus={!hasProfileEmail}
-						/>
-						<FieldError meta={field.state.meta} id="signin-email-error" />
-					</div>
-				)}
-			</form.Field>
-			<form.Field name="password">
-				{(field) => (
-					<div className="grid gap-1.5">
-						<Label htmlFor="signin-password">Password</Label>
-						<PasswordInput
-							id="signin-password"
-							value={field.state.value}
-							onChange={(next) => {
-								field.handleChange(next);
-								setError(null);
-							}}
-							onBlur={field.handleBlur}
-							aria-invalid={showFieldError(field.state.meta)}
-							aria-describedby="signin-password-error"
-							autoComplete="new-password"
-							autoFocus={hasProfileEmail}
-						/>
-						<FieldError meta={field.state.meta} id="signin-password-error" />
-						<StrengthMeter password={field.state.value} />
-					</div>
-				)}
-			</form.Field>
-			{error && (
-				<p className="text-xs text-destructive sm:col-span-2">{error}</p>
-			)}
-			<div className="sm:col-span-2">
-				<Button type="submit" size="sm" disabled={busy}>
-					{busy && <Loader2 className="animate-spin" />}
-					{hasProfileEmail ? "Enable email sign-in" : "Add email sign-in"}
-				</Button>
-			</div>
-			<p className="text-xs text-muted-foreground sm:col-span-2">
-				You'll use this email and password to sign in. On a new device we'll
-				text a one-time code to your phone to confirm it's you.
-			</p>
-		</form>
-	);
-}
-
-function ChangePassword({ onDone }: { onDone: () => void }) {
-	const [error, setError] = useState<string | null>(null);
-	const [busy, setBusy] = useState(false);
-
-	const form = useForm({
-		defaultValues: { password: "" },
-		validators: { onChange: changePasswordSchema },
-		onSubmit: async ({ value }) => {
-			setBusy(true);
-			setError(null);
-			try {
-				const updated = await api.me.setPassword(value.password);
-				authStore.customerUpdated(updated);
-				toast.success("Password updated");
-				onDone();
-			} catch (err) {
-				setError(
-					err instanceof ApiError
-						? err.message
-						: "Couldn't update it. Try again.",
-				);
-			} finally {
-				setBusy(false);
-			}
-		},
-	});
-
-	return (
-		<form
-			onSubmit={(e) => {
-				e.preventDefault();
-				void form.handleSubmit();
-			}}
-			className="grid gap-4 border-t border-foreground/15 bg-muted/30 px-6 py-5 sm:max-w-md"
-		>
-			<form.Field name="password">
-				{(field) => (
-					<div className="grid gap-1.5">
-						<Label htmlFor="new-password">New password</Label>
-						<PasswordInput
-							id="new-password"
-							value={field.state.value}
-							onChange={(next) => {
-								field.handleChange(next);
-								setError(null);
-							}}
-							onBlur={field.handleBlur}
-							aria-invalid={showFieldError(field.state.meta)}
-							aria-describedby="new-password-error"
-							autoComplete="new-password"
-							autoFocus
-						/>
-						<FieldError meta={field.state.meta} id="new-password-error" />
-						<StrengthMeter password={field.state.value} />
-					</div>
-				)}
-			</form.Field>
-			{error && <p className="text-xs text-destructive">{error}</p>}
-			<div>
-				<Button type="submit" size="sm" disabled={busy}>
-					{busy && <Loader2 className="animate-spin" />}
-					Update password
-				</Button>
-			</div>
-		</form>
 	);
 }

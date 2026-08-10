@@ -7,7 +7,6 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 import AuthShell from "@/components/auth/auth-shell";
-import EmailLogin from "@/components/auth/email-login";
 import OtpLogin from "@/components/auth/otp-login";
 import PinLogin from "@/components/auth/pin-login";
 import { Button } from "@/components/ui/button";
@@ -40,11 +39,12 @@ export const Route = createFileRoute("/_slim/login")({
 function LoginPage() {
 	const navigate = useNavigate();
 	const { redirect: redirectTo } = Route.useSearch();
-	// A trusted device gets the fastest path first — a PIN. Otherwise phone is
-	// the door people know; email is a quiet toggle away. All land in the same
-	// session. See the auth flow map.
-	const [method, setMethod] = useState<"phone" | "email" | "pin">(() =>
-		api.auth.hasTrustedDevice() ? "pin" : "phone",
+	// A PIN is the only credential, and it needs a device this browser has
+	// already proven by OTP. So a trusted device goes straight to the PIN box;
+	// everyone else starts at the phone OTP, which is what mints the trust.
+	const trusted = api.auth.hasTrustedDevice();
+	const [method, setMethod] = useState<"phone" | "pin">(() =>
+		trusted ? "pin" : "phone",
 	);
 	const done = () => void navigate({ to: redirectTo ?? "/dashboard" });
 
@@ -52,12 +52,11 @@ function LoginPage() {
 		<AuthShell>
 			{method === "pin" ? (
 				<PinLogin onSuccess={done} onUseCode={() => setMethod("phone")} />
-			) : method === "phone" ? (
-				<OtpLogin onSuccess={done} onSwitchMethod={() => setMethod("email")} />
 			) : (
-				<EmailLogin
+				<OtpLogin
 					onSuccess={done}
-					onSwitchMethod={() => setMethod("phone")}
+					// Only worth offering the way back if a PIN can actually work here.
+					onSwitchMethod={trusted ? () => setMethod("pin") : undefined}
 				/>
 			)}
 			<div className="mt-6 flex items-center justify-center gap-2 border-t border-foreground/10 pt-5">

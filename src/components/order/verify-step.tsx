@@ -318,8 +318,7 @@ export default function VerifyStep({
 								id="depot-account-email-error"
 							/>
 							<p className="text-xs text-muted-foreground">
-								Saved to your profile for receipts and updates — not used to
-								sign in.
+								Used for receipts and updates — and to sign in with your PIN.
 							</p>
 						</div>
 					)}

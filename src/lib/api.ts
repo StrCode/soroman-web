@@ -3,16 +3,15 @@
  * placement talk to the real backend; the namespaces the backend doesn't
  * serve yet are still mocked and say so at their definition:
  *
- *   REAL  auth.requestOtp / register / verifyOtp / logout, restoreSession,
- *         auth.continueWithEmail (password login) + verifyEmailStepUp (the
- *         new-device OTP step-up), me.update / virtualAccount / setPassword /
- *         addEmailSignIn, catalog.*, orders.place / list / get, dashboard.overview,
- *         wallet.transactions, tracking.lookup, payments.dedicatedAccount,
- *         watchCredits (polling)
+ *   REAL  auth.requestOtp / register / verifyOtp / loginWithPin / logout,
+ *         restoreSession, me.update / virtualAccount / setPin, catalog.*,
+ *         orders.place / list / get, dashboard.overview, wallet.transactions,
+ *         tracking.lookup, payments.dedicatedAccount, watchCredits (polling)
  *   LOCAL me.settings (browser-only buyer preferences)
  *
- * Email + password is only ever ADDED to a phone-registered account (there is
- * no email account creation); a new device proves the phone once via OTP.
+ * A PIN is the only credential. It signs in against either identifier on the
+ * account — email or phone — but only from a device that has already proven
+ * the phone by OTP once; every new device starts with that OTP.
  * Transport (cookies, bearer, CSRF, serialized refresh) lives in lib/http.ts.
  */
 
@@ -23,18 +22,17 @@ import {
 	request,
 	tokensIssued,
 } from "./http";
+import { normalizePhone } from "./phone";
 
 export { ApiError };
 
 export type Customer = {
 	id: number | string;
-	/** Empty string for accounts created via email sign-in until a phone is added. */
 	phone: string;
 	name: string;
 	company_name?: string | null;
+	/** Doubles as a sign-in identifier: email + PIN resolves the same account. */
 	email?: string | null;
-	/** True when email + password sign-in is configured for this account. */
-	email_auth?: boolean;
 };
 
 /**
@@ -328,7 +326,6 @@ export type TrustedDevice = {
 /** The real, server-sourced state of every sign-in method on the account. */
 export type Identities = {
 	phone: { verified: boolean };
-	hasPassword: boolean;
 	hasPin: boolean;
 	providers: { provider: string; verified: boolean; linkedAt: string }[];
 	passkeys: Passkey[];
@@ -381,8 +378,8 @@ type SessionData = {
 
 /**
  * The last customer any auth-ish endpoint returned. Lets calls that need a
- * detail about the signed-in customer (their email, for the password
- * endpoint) work without a circular import of the auth store.
+ * detail about the signed-in customer work without a circular import of the
+ * auth store.
  */
 let knownCustomer: ServerCustomer | null = null;
 
@@ -394,9 +391,6 @@ function mapCustomer(c: ServerCustomer): Customer {
 		name: c.name ?? "",
 		company_name: c.companyName ?? null,
 		email: c.email ?? null,
-		// The auth payload doesn't say whether password sign-in is configured;
-		// GET /identities does. Until the account screen fetches it, assume not.
-		email_auth: false,
 	};
 }
 
@@ -770,6 +764,8 @@ export const api = {
 		register: async (input: {
 			phone: string;
 			name: string;
+			/** Stored on the account so email + PIN sign-in has an identifier. */
+			email?: string;
 			companyName?: string;
 		}): Promise<{ devCode?: string }> => {
 			const body = await request<{ devCode?: string }>(`${AUTH}/register`, {
@@ -777,6 +773,7 @@ export const api = {
 				body: {
 					phone: input.phone,
 					name: input.name,
+					...(input.email ? { email: input.email } : {}),
 					...(input.companyName ? { companyName: input.companyName } : {}),
 				},
 				retryOn401: false,
@@ -826,12 +823,16 @@ export const api = {
 		},
 
 		/**
-		 * Sign in with a PIN instead of an OTP — only works on a trusted device
-		 * (the stored device token is mandatory). Falls back to OTP everywhere
-		 * else, so the caller offers this only when hasTrustedDevice() is true.
+		 * Sign in with a PIN — the only credential the portal has. `identifier`
+		 * is whichever the customer typed: an email address or a phone number,
+		 * both of which resolve the same account server-side.
+		 *
+		 * A PIN is only ever a second factor for a device already proven by OTP,
+		 * so the stored device token is mandatory; an unrecognised browser has
+		 * to pass the phone OTP once first (which is what mints the token).
 		 */
 		loginWithPin: async (
-			phone: string,
+			identifier: string,
 			pin: string,
 		): Promise<{ customer: Customer }> => {
 			const deviceToken = readDeviceToken();
@@ -841,80 +842,18 @@ export const api = {
 					"This device isn't set up for PIN sign-in yet.",
 				);
 			}
+			// An "@" is the only thing that separates the two — a phone number can
+			// never contain one, so this needs no cleverer test.
+			const trimmed = identifier.trim();
+			const credential = trimmed.includes("@")
+				? { email: trimmed.toLowerCase() }
+				: { phone: normalizePhone(trimmed) ?? trimmed };
 			const data = await request<SessionData>(`${AUTH}/login/pin`, {
 				method: "POST",
-				body: { phone, pin, deviceToken },
+				body: { ...credential, pin, deviceToken },
 				retryOn401: false,
 			});
 			tokensIssued(data);
-			return { customer: mapCustomer(data.customer) };
-		},
-
-		/**
-		 * Email + password login. The mock's { status: "new" } branch is gone —
-		 * the backend answers a wrong email and a wrong password identically, so
-		 * "new" is indistinguishable from "typo" on purpose. A recognised
-		 * password from an unknown device demands a phone OTP step-up; until the
-		 * step-up screen exists, that path routes the customer through phone
-		 * sign-in once (which marks nothing — the next password login from this
-		 * browser still needs the step-up).
-		 */
-		continueWithEmail: async (
-			email: string,
-			password: string,
-		): Promise<
-			| { status: "signed_in"; customer: Customer }
-			| { status: "step_up"; phone: string }
-		> => {
-			const deviceToken = readDeviceToken();
-			const body = await request<{
-				success: boolean;
-				stepUpRequired?: boolean;
-				data?: SessionData | { phone: string };
-			}>(`${AUTH}/login/password`, {
-				method: "POST",
-				body: { email, password, ...(deviceToken ? { deviceToken } : {}) },
-				retryOn401: false,
-				raw: true,
-			});
-
-			// A recognised device signs straight in. An unrecognised one had the
-			// right password but must prove the phone once more — an OTP is already
-			// on its way to the number on file.
-			if (body.stepUpRequired) {
-				const { phone } = body.data as { phone: string };
-				return { status: "step_up", phone };
-			}
-			const data = body.data as SessionData;
-			tokensIssued(data);
-			return { status: "signed_in", customer: mapCustomer(data.customer) };
-		},
-
-		/**
-		 * Completes a password login from a new device with the OTP sent to the
-		 * phone on file. `trustDevice` remembers this browser (stores a device
-		 * token) so the next password login here skips the step-up entirely.
-		 */
-		verifyEmailStepUp: async (
-			phone: string,
-			code: string,
-			opts: { trustDevice?: boolean; deviceName?: string } = {},
-		): Promise<{ customer: Customer }> => {
-			const data = await request<SessionData & { deviceToken?: string }>(
-				`${AUTH}/login/password/verify`,
-				{
-					method: "POST",
-					body: {
-						phone,
-						code,
-						...(opts.trustDevice ? { trustDevice: true } : {}),
-						...(opts.deviceName ? { deviceName: opts.deviceName } : {}),
-					},
-					retryOn401: false,
-				},
-			);
-			tokensIssued(data);
-			if (data.deviceToken) writeDeviceToken(data.deviceToken);
 			return { customer: mapCustomer(data.customer) };
 		},
 
@@ -990,43 +929,6 @@ export const api = {
 			return next;
 		},
 
-		/**
-		 * Adds email + password sign-in to the signed-in account. Being signed
-		 * in IS the proof of ownership — the backend takes email and password
-		 * directly; the emailed-code step the old mock staged does not exist.
-		 */
-		addEmailSignIn: async (
-			email: string,
-			password: string,
-		): Promise<Customer> => {
-			await request("/api/customer/auth/password", {
-				method: "POST",
-				body: { email, password },
-			});
-			const updated: ServerCustomer = {
-				...(knownCustomer as ServerCustomer),
-				email,
-			};
-			const customer = mapCustomer(updated);
-			customer.email_auth = true;
-			return customer;
-		},
-
-		/** Change the password on an account that already has email sign-in. */
-		setPassword: async (password: string): Promise<Customer> => {
-			const email = knownCustomer?.email;
-			if (!email) {
-				throw new ApiError(400, "Add an email to your account first.");
-			}
-			await request("/api/customer/auth/password", {
-				method: "POST",
-				body: { email, password },
-			});
-			const customer = mapCustomer(knownCustomer as ServerCustomer);
-			customer.email_auth = true;
-			return customer;
-		},
-
 		/** Set (or replace) the 6-digit device PIN. Must be signed in. */
 		setPin: async (pin: string): Promise<void> => {
 			await request(`${AUTH}/pin`, { method: "POST", body: { pin } });
@@ -1034,9 +936,9 @@ export const api = {
 
 		/**
 		 * The true state of every sign-in method — the only source that says
-		 * whether a password is set, which providers/passkeys are linked, and
-		 * which devices are trusted. The account screen reads from here rather
-		 * than the session payload, which carries none of it.
+		 * whether a PIN is set, which providers/passkeys are linked, and which
+		 * devices are trusted. The account screen reads from here rather than
+		 * the session payload, which carries none of it.
 		 */
 		identities: async (): Promise<Identities> => {
 			const data = await request<{
@@ -1047,9 +949,9 @@ export const api = {
 			}>(`${AUTH}/identities`);
 			return {
 				phone: data.phone,
-				hasPassword: data.identities.some((i) => i.provider === "email"),
 				hasPin: data.identities.some((i) => i.provider === "pin"),
-				// Email/password and PIN are surfaced as flags, not OAuth-style links.
+				// PIN is surfaced as a flag, not an OAuth-style link. Legacy "email"
+				// rows may still exist on old accounts; they no longer sign anyone in.
 				providers: data.identities.filter(
 					(i) => i.provider !== "email" && i.provider !== "pin",
 				),

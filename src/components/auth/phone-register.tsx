@@ -20,16 +20,22 @@ import {
 } from "@/lib/api";
 import { authStore } from "@/lib/auth";
 import { deviceName } from "@/lib/device";
-import { phoneSchema, pinSchema, requiredTrimmed } from "@/lib/validation";
+import {
+	emailSchema,
+	phoneSchema,
+	pinSchema,
+	requiredTrimmed,
+} from "@/lib/validation";
 
-const detailsSchema = z.object({
-	name: requiredTrimmed("Your name is required."),
-	companyName: z.string(),
-	phone: phoneSchema,
-});
-
-const pinSetSchema = z
-	.object({ pin: pinSchema, confirm: z.string() })
+const detailsSchema = z
+	.object({
+		name: requiredTrimmed("Your name is required."),
+		companyName: z.string(),
+		phone: phoneSchema,
+		email: emailSchema,
+		pin: pinSchema,
+		confirm: z.string(),
+	})
 	.refine((d) => d.pin === d.confirm, {
 		message: "The PINs don't match.",
 		path: ["confirm"],
@@ -38,18 +44,23 @@ const pinSetSchema = z
 const RESEND_COOLDOWN_SECONDS = 60;
 const OTP_LENGTH = 6;
 
-type Step = "details" | "code" | "pin";
+type Step = "details" | "code";
 
 type PhoneRegisterProps = {
 	onSuccess: (customer: Customer) => void;
 };
 
 /**
- * Phone-first registration, mirroring the backend contract: name and phone
- * up front → POST /register sends the code → the first successful
- * verification activates the account and signs in. The response to register
- * is deliberately generic (it never confirms whether a number exists), so
- * the UI always advances to the code step.
+ * Registration in two screens: everything the account needs up front — name,
+ * phone, email, and the PIN they'll sign in with — then one code to the phone
+ * to prove the number.
+ *
+ * The PIN is collected on the first screen but can only be *saved* after the
+ * code clears, since POST /pin needs a session. Email rides along on
+ * /register, which stores it as the second sign-in identifier.
+ *
+ * The response to /register is deliberately generic (it never confirms
+ * whether a number exists), so the UI always advances to the code step.
  */
 export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 	const [step, setStep] = useState<Step>("details");
@@ -59,7 +70,6 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 	const [isBusy, setIsBusy] = useState(false);
 	const [resendIn, setResendIn] = useState(0);
 	const [devCode, setDevCode] = useState<string | null>(null);
-	const [customer, setCustomer] = useState<Customer | null>(null);
 
 	useEffect(() => {
 		if (resendIn <= 0) return;
@@ -68,7 +78,14 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 	}, [resendIn > 0]);
 
 	const detailsForm = useForm({
-		defaultValues: { name: "", companyName: "", phone: "" },
+		defaultValues: {
+			name: "",
+			companyName: "",
+			phone: "",
+			email: "",
+			pin: "",
+			confirm: "",
+		},
 		validators: { onChange: detailsSchema },
 		onSubmit: async ({ value }) => {
 			const e164 = normalizePhone(value.phone)!;
@@ -78,6 +95,7 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 				const { devCode: dc } = await api.auth.register({
 					phone: e164,
 					name: value.name.trim(),
+					email: value.email.trim().toLowerCase(),
 					...(value.companyName.trim()
 						? { companyName: value.companyName.trim() }
 						: {}),
@@ -104,16 +122,28 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 		setIsBusy(true);
 		setError(null);
 		try {
-			// Trust this device on the way in, so the PIN they set next can stand in
-			// for the OTP from here on.
+			// Trust this device on the way in, so the PIN chosen on the first screen
+			// can stand in for the OTP from here on.
 			const session = await api.auth.verifyOtp(phone, otp, {
 				trustDevice: true,
 				deviceName: deviceName(),
 			});
 			authStore.signedIn(session.customer);
-			setCustomer(session.customer);
+
+			// The PIN could only be collected, not saved, until now — POST /pin
+			// needs the session this verification just created. If it fails the
+			// account is still perfectly good, so say so rather than stranding
+			// someone on a code screen they've already cleared.
+			try {
+				await api.me.setPin(detailsForm.state.values.pin);
+				toast.success(`Welcome to Soroman, ${session.customer.name}!`);
+			} catch {
+				toast.success(
+					"You're in — but we couldn't save your PIN. Set one in Account.",
+				);
+			}
 			setCode("");
-			setStep("pin");
+			onSuccess(session.customer);
 		} catch (err) {
 			setCode("");
 			setError(
@@ -132,33 +162,6 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 		if (next.length === OTP_LENGTH) void verifyCode(next);
 	};
 
-	const finish = (message?: string) => {
-		if (!customer) return;
-		toast.success(message ?? `Welcome to Soroman, ${customer.name}!`);
-		onSuccess(customer);
-	};
-
-	const pinForm = useForm({
-		defaultValues: { pin: "", confirm: "" },
-		validators: { onChange: pinSetSchema },
-		onSubmit: async ({ value }) => {
-			setIsBusy(true);
-			setError(null);
-			try {
-				await api.me.setPin(value.pin);
-				finish("You're all set — sign in with your PIN next time.");
-			} catch (err) {
-				setError(
-					err instanceof ApiError
-						? err.message
-						: "Couldn't set your PIN. Try again.",
-				);
-			} finally {
-				setIsBusy(false);
-			}
-		},
-	});
-
 	const resend = async () => {
 		if (!phone) return;
 		setIsBusy(true);
@@ -169,6 +172,7 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 			await api.auth.register({
 				phone,
 				name: detailsForm.state.values.name.trim(),
+				email: detailsForm.state.values.email.trim().toLowerCase(),
 			});
 			setResendIn(RESEND_COOLDOWN_SECONDS);
 		} catch {
@@ -177,6 +181,33 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 			setIsBusy(false);
 		}
 	};
+
+	const pinField = (name: "pin" | "confirm", id: string, label: string) => (
+		<detailsForm.Field name={name}>
+			{(field) => (
+				<div className="grid gap-1.5">
+					<Label htmlFor={id}>{label}</Label>
+					<Input
+						id={id}
+						type="password"
+						inputMode="numeric"
+						autoComplete="new-password"
+						maxLength={6}
+						placeholder="••••••"
+						value={field.state.value}
+						onChange={(e) =>
+							field.handleChange(e.target.value.replace(/\D/g, "").slice(0, 6))
+						}
+						onBlur={field.handleBlur}
+						aria-invalid={showFieldError(field.state.meta) || undefined}
+						aria-describedby={`${id}-error`}
+						className="h-11 text-base tracking-[0.4em]"
+					/>
+					<FieldError meta={field.state.meta} id={`${id}-error`} />
+				</div>
+			)}
+		</detailsForm.Field>
+	);
 
 	if (step === "details") {
 		return (
@@ -192,7 +223,8 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 						Create your account
 					</h1>
 					<p className="mt-1.5 text-sm text-muted-foreground">
-						One code to your phone and you're in — no password needed.
+						Pick a PIN to sign in with, then one code to your phone and you're
+						in — no password needed.
 					</p>
 				</div>
 				<detailsForm.Field name="name">
@@ -252,6 +284,35 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 						</div>
 					)}
 				</detailsForm.Field>
+				<detailsForm.Field name="email">
+					{(field) => (
+						<div className="grid gap-1.5">
+							<Label htmlFor="reg-email">Email</Label>
+							<Input
+								id="reg-email"
+								type="email"
+								inputMode="email"
+								autoComplete="email"
+								autoCapitalize="none"
+								autoCorrect="off"
+								spellCheck={false}
+								placeholder="ada@company.com"
+								value={field.state.value}
+								onChange={(e) => field.handleChange(e.target.value)}
+								onBlur={field.handleBlur}
+								aria-invalid={showFieldError(field.state.meta) || undefined}
+								aria-describedby="reg-email-error"
+								className="h-11 text-base"
+							/>
+							<FieldError meta={field.state.meta} id="reg-email-error" />
+						</div>
+					)}
+				</detailsForm.Field>
+				{pinField("pin", "reg-pin", "PIN")}
+				{pinField("confirm", "reg-confirm-pin", "Confirm PIN")}
+				<p className="-mt-2 text-xs text-muted-foreground">
+					You'll sign in with your email or phone number and this 6-digit PIN.
+				</p>
 				{error && (
 					<p role="alert" className="text-xs text-destructive">
 						{error}
@@ -270,83 +331,6 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 						Sign in
 					</Link>
 				</p>
-			</form>
-		);
-	}
-
-	if (step === "pin") {
-		const pinField = (
-			name: "pin" | "confirm",
-			id: string,
-			label: string,
-			autoFocus?: boolean,
-		) => (
-			<pinForm.Field name={name}>
-				{(field) => (
-					<div className="grid gap-1.5">
-						<Label htmlFor={id}>{label}</Label>
-						<Input
-							id={id}
-							type="password"
-							inputMode="numeric"
-							autoComplete="off"
-							maxLength={6}
-							placeholder="••••••"
-							value={field.state.value}
-							onChange={(e) => {
-								field.handleChange(
-									e.target.value.replace(/\D/g, "").slice(0, 6),
-								);
-								setError(null);
-							}}
-							onBlur={field.handleBlur}
-							aria-invalid={showFieldError(field.state.meta) || undefined}
-							aria-describedby={`${id}-error`}
-							className="h-11 text-base tracking-[0.4em]"
-							autoFocus={autoFocus}
-						/>
-						<FieldError meta={field.state.meta} id={`${id}-error`} />
-					</div>
-				)}
-			</pinForm.Field>
-		);
-
-		return (
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					void pinForm.handleSubmit();
-				}}
-				className="grid gap-6"
-			>
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">Set a PIN</h1>
-					<p className="mt-1.5 text-sm text-muted-foreground">
-						You're in
-						{customer?.name ? `, ${customer.name.split(/\s+/)[0]}` : ""}. This
-						device is trusted now — pick a 6-digit PIN and you can sign in with
-						it next time, no code.
-					</p>
-				</div>
-				{pinField("pin", "reg-pin", "New PIN", true)}
-				{pinField("confirm", "reg-confirm-pin", "Confirm PIN")}
-				{error && (
-					<p role="alert" className="text-xs text-destructive">
-						{error}
-					</p>
-				)}
-				<Button type="submit" size="lg" disabled={isBusy}>
-					{isBusy && <Loader2 className="animate-spin" />}
-					Set PIN &amp; continue
-				</Button>
-				<button
-					type="button"
-					className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground disabled:opacity-50"
-					disabled={isBusy}
-					onClick={() => finish()}
-				>
-					Skip for now — I'll set it later in Account
-				</button>
 			</form>
 		);
 	}
