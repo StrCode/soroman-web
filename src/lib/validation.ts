@@ -30,22 +30,6 @@ export const optionalEmailSchema = z
 		"Enter a valid email address, or leave it empty.",
 	);
 
-/**
- * Sign-in takes either identifier in one box. An "@" is the only thing that
- * tells them apart — a phone number can never contain one.
- */
-export const identifierSchema = z
-	.string()
-	.trim()
-	.min(1, "Enter your email address or phone number.")
-	.refine(
-		(v) =>
-			v.includes("@")
-				? z.email().safeParse(v).success
-				: normalizePhone(v) !== null,
-		"Enter a valid email address or phone number.",
-	);
-
 export const pinSchema = z
 	.string()
 	.regex(/^\d{6}$/, "Your PIN is exactly 6 digits.");
