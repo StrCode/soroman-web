@@ -74,7 +74,7 @@ export default function StatusTimeline({
 			note: paid
 				? "Payment received"
 				: approved
-					? "Pay the order amount to confirm."
+					? "Transfer the quoted amount — Soroman confirms once received."
 					: undefined,
 		},
 		{
