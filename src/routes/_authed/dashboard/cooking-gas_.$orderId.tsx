@@ -19,9 +19,11 @@ import {
 import { OrderDetailSkeleton } from "@/components/orders/order-detail-skeleton";
 import { Button } from "@/components/ui/button";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import { getMyLpgOrder, type LpgOrderRequest } from "@/lib/cooking-gas/api";
+import { requestOrderLiveMs, visibleRefetch } from "@/lib/live-refetch";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +57,7 @@ const formatDate = (iso?: string) =>
  */
 function CookingGasOrderDetailPage() {
 	const { orderId } = Route.useParams();
+	const pageVisible = usePageVisible();
 
 	const {
 		data: request,
@@ -63,7 +66,11 @@ function CookingGasOrderDetailPage() {
 	} = useQuery({
 		queryKey: ["cooking-gas-order", orderId],
 		queryFn: () => getMyLpgOrder(Number(orderId)),
-		refetchInterval: 10_000,
+		refetchInterval: (query) => {
+			const data = query.state.data as LpgOrderRequest | undefined;
+			return visibleRefetch(pageVisible, requestOrderLiveMs(data));
+		},
+		refetchIntervalInBackground: false,
 		retry: false,
 	});
 

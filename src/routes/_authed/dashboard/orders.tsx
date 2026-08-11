@@ -8,6 +8,7 @@ import {
 	DepotPayDialog,
 } from "@/components/orders/depot-order-actions";
 import { Button } from "@/components/ui/button";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	api,
 	describePriceWindow,
@@ -16,6 +17,7 @@ import {
 	type OrdersListParams,
 	type OrdersListResult,
 } from "@/lib/api";
+import { LIVE_PAYMENT_MS, visibleRefetch } from "@/lib/live-refetch";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -213,6 +215,7 @@ const columns: AppColumnDef<OrderRecord>[] = [
  */
 function OrdersPage() {
 	const navigate = useNavigate();
+	const pageVisible = usePageVisible();
 	const [filter, setFilter] = useState<FilterKey>("all");
 	const [page, setPage] = useState(1);
 	const [payOrder, setPayOrder] = useState<OrderRecord | null>(null);
@@ -228,17 +231,23 @@ function OrdersPage() {
 		queryFn: () => api.orders.list(listParams),
 		refetchInterval: (query) => {
 			const result = query.state.data as OrdersListResult | undefined;
-			return result?.orders.some((o) => o.status === "awaiting_payment")
-				? 10_000
-				: false;
+			const hasUnpaid = result?.orders.some(
+				(o) => o.status === "awaiting_payment",
+			);
+			return visibleRefetch(
+				pageVisible,
+				hasUnpaid ? LIVE_PAYMENT_MS : false,
+			);
 		},
+		refetchIntervalInBackground: false,
 	});
 
 	const attentionQuery = useQuery({
 		queryKey: ["orders", "attention"],
 		queryFn: () =>
 			api.orders.list({ status: "awaiting_payment", page: 1, limit: 10 }),
-		refetchInterval: 10_000,
+		refetchInterval: visibleRefetch(pageVisible, LIVE_PAYMENT_MS),
+		refetchIntervalInBackground: false,
 	});
 
 	// Lightweight totals for the pipeline cards — one status each (in-motion

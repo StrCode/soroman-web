@@ -29,6 +29,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import {
@@ -43,6 +44,7 @@ import {
 	STATUS_LABELS,
 } from "@/lib/dangote-delivery/types";
 import { ApiError } from "@/lib/http";
+import { requestOrderLiveMs, visibleRefetch } from "@/lib/live-refetch";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
 
@@ -70,6 +72,7 @@ export const Route = createFileRoute(
  */
 function DangoteDeliveryOrderDetailPage() {
 	const { orderId } = Route.useParams();
+	const pageVisible = usePageVisible();
 
 	const {
 		data: request,
@@ -78,7 +81,11 @@ function DangoteDeliveryOrderDetailPage() {
 	} = useQuery({
 		queryKey: ["dangote-delivery-order", orderId],
 		queryFn: () => getMyDangoteOrder(Number(orderId)),
-		refetchInterval: 10000,
+		refetchInterval: (query) => {
+			const data = query.state.data as DangoteOrderRequest | undefined;
+			return visibleRefetch(pageVisible, requestOrderLiveMs(data));
+		},
+		refetchIntervalInBackground: false,
 		retry: false,
 	});
 
@@ -156,10 +163,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 			}
 		: null;
 
-	const invalidate = () => {
-		void queryClient.invalidateQueries({
-			queryKey: ["dangote-delivery-order", String(request.id)],
-		});
+	const invalidateLists = () => {
 		void queryClient.invalidateQueries({
 			queryKey: ["dangote-delivery-orders"],
 		});
@@ -168,13 +172,23 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 
 	const pay = useMutation({
 		mutationFn: () => payMyDangoteOrder(request.id),
-		onSuccess: invalidate,
+		onSuccess: (updated) => {
+			queryClient.setQueryData(
+				["dangote-delivery-order", String(request.id)],
+				updated,
+			);
+			invalidateLists();
+		},
 	});
 
 	const cancel = useMutation({
 		mutationFn: () => cancelMyDangoteOrder(request.id),
-		onSuccess: () => {
-			invalidate();
+		onSuccess: (updated) => {
+			queryClient.setQueryData(
+				["dangote-delivery-order", String(request.id)],
+				updated,
+			);
+			invalidateLists();
 			setCancelOpen(false);
 		},
 	});
