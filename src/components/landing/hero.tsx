@@ -142,19 +142,7 @@ export default function Hero() {
 
 				<div className="min-w-0 lg:col-span-6">
 					{isLoading ? (
-						<div className="overflow-hidden rounded-xl border border-foreground/15 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
-							<div className="flex items-center justify-between border-b border-foreground/15 px-6 py-4">
-								<span className="text-xs tracking-[0.25em] uppercase">
-									Today's Prices
-								</span>
-								<Skeleton className="h-3 w-12" />
-							</div>
-							<div className="space-y-6 px-6 py-6">
-								{Array.from({ length: 4 }, (_, i) => (
-									<Skeleton key={i} className="h-14 w-full" />
-								))}
-							</div>
-						</div>
+						<MarketSnapshotSkeleton />
 					) : (
 						<MarketSnapshot
 							rows={rows}
@@ -166,6 +154,46 @@ export default function Hero() {
 				</div>
 			</div>
 		</section>
+	);
+}
+
+function MarketSnapshotSkeleton() {
+	return (
+		<div className="overflow-hidden rounded-xl border border-foreground/15 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
+			<div className="flex items-center justify-between border-b border-foreground/15 px-4 py-4 sm:px-6">
+				<span className="text-xs tracking-[0.25em] uppercase">
+					Market snapshot
+				</span>
+				<span className="flex items-center gap-2 text-xs tracking-[0.2em] text-muted-foreground uppercase">
+					<span
+						className="size-1.5 rounded-full bg-muted"
+						aria-hidden
+					/>
+					Live
+				</span>
+			</div>
+
+			{Array.from({ length: 4 }, (_, i) => (
+				<div
+					key={i}
+					className="flex items-center justify-between gap-3 border-b border-foreground/15 px-4 py-4 sm:gap-5 sm:px-6"
+				>
+					<div className="min-w-0 flex-1">
+						<Skeleton className="h-3 w-28 sm:w-36" />
+						<Skeleton className="mt-2.5 h-3.5 w-40 max-w-full sm:w-52" />
+						<Skeleton className="mt-2 h-2.5 w-32 max-w-full" />
+					</div>
+					<div className="flex shrink-0 flex-col items-end gap-1.5 sm:min-w-36">
+						<Skeleton className="h-6 w-24 sm:h-7 sm:w-28" />
+						<Skeleton className="h-4 w-20 rounded-full" />
+					</div>
+				</div>
+			))}
+
+			<div className="bg-muted/60 px-4 py-3 sm:px-6">
+				<Skeleton className="h-3 w-full max-w-sm" />
+			</div>
+		</div>
 	);
 }
 
