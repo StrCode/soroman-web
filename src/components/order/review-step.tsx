@@ -2,10 +2,10 @@ import {
 	type Depot,
 	type LoadingDetails,
 	type OrderLine,
-	PRICE_LOCK_HOURS,
+	paymentWindowCopy,
 	type TruckEntry,
 } from "@/lib/api";
-import { formatNaira } from "@/lib/use-catalog";
+import { formatNaira, useCatalog } from "@/lib/use-catalog";
 
 /**
  * Last look before placing the order. Summary only — the route footer owns
@@ -26,6 +26,7 @@ export default function ReviewStep({
 	companyName: string;
 	total: number;
 }) {
+	const { orderExpiryHours } = useCatalog();
 	const line = lines[0];
 	const unit = line ? (line.unit === "litre" ? "L" : line.unit) : "";
 	const filledTrucks = line
@@ -93,9 +94,7 @@ export default function ReviewStep({
 				))}
 			</dl>
 			<p className="mt-6 rounded-lg border border-foreground/10 bg-muted/40 p-4 text-xs leading-relaxed text-muted-foreground">
-				Your price stays valid for {PRICE_LOCK_HOURS} hours from the time you
-				order. Pay on the next step or from your dashboard — after that, you
-				reorder at the current price.
+				{paymentWindowCopy(orderExpiryHours)}
 			</p>
 		</section>
 	);

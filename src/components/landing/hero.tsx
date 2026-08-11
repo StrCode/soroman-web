@@ -2,8 +2,8 @@ import { Link } from "@tanstack/react-router";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { PRICE_LOCK_HOURS } from "@/lib/api";
 import { Skeleton } from "@/components/ui/skeleton";
+import { paymentWindowHoursLabel } from "@/lib/api";
 import { formatNaira, useCatalog } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +41,7 @@ const REST_TURNS = 6;
 const PANEL_CLOSE_GRACE_MS = 200;
 
 export default function Hero() {
-	const { depots, products, updatedAt, isLoading } = useCatalog();
+	const { depots, products, updatedAt, isLoading, orderExpiryHours } = useCatalog();
 
 	const openDepots = useMemo(() => depots.filter((d) => d.is_open), [depots]);
 
@@ -149,6 +149,7 @@ export default function Hero() {
 							openDepotCount={openDepots.length}
 							totalDepotCount={depots.length}
 							updatedAt={updatedAt}
+							orderExpiryHours={orderExpiryHours}
 						/>
 					)}
 				</div>
@@ -202,11 +203,13 @@ function MarketSnapshot({
 	openDepotCount,
 	totalDepotCount,
 	updatedAt,
+	orderExpiryHours,
 }: {
 	rows: ProductRow[];
 	openDepotCount: number;
 	totalDepotCount: number;
 	updatedAt: Date | null;
+	orderExpiryHours: number | null;
 }) {
 	const [paused, setPaused] = useState(false);
 	/** Which item each row currently shows: index into [...quotes, ...nonQuoting]. */
@@ -215,6 +218,7 @@ function MarketSnapshot({
 	const [fading, setFading] = useState<Record<string, boolean>>({});
 	const [panelKey, setPanelKey] = useState<string | null>(null);
 	const [panelFading, setPanelFading] = useState(false);
+	const paymentWindowLabel = paymentWindowHoursLabel(orderExpiryHours);
 
 	const pausedRef = useRef(false);
 	const turnRef = useRef(0);
@@ -373,7 +377,7 @@ function MarketSnapshot({
 							})}
 						</>
 					)}
-					{` · Price valid ${PRICE_LOCK_HOURS} hours from the time you order`}
+					{paymentWindowLabel ? ` · ${paymentWindowLabel}` : ""}
 				</p>
 				<div
 					className="ease-luxe grid transition-[grid-template-rows] duration-[280ms]"

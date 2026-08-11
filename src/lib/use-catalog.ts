@@ -5,6 +5,8 @@ import { api, type Depot, type DepotProduct } from "./api";
 type CatalogState = {
 	depots: Depot[];
 	products: DepotProduct[];
+	/** Hours unpaid orders may sit — from GET /api/catalog. Null until loaded. */
+	orderExpiryHours: number | null;
 	updatedAt: Date | null;
 	isLoading: boolean;
 };
@@ -13,18 +15,27 @@ export function useCatalog(): CatalogState {
 	const [state, setState] = useState<CatalogState>({
 		depots: [],
 		products: [],
+		orderExpiryHours: null,
 		updatedAt: null,
 		isLoading: true,
 	});
 
 	useEffect(() => {
 		let cancelled = false;
-		Promise.all([api.catalog.depots(), api.catalog.products()]).then(
-			([depots, products]) => {
-				if (cancelled) return;
-				setState({ depots, products, updatedAt: new Date(), isLoading: false });
-			},
-		);
+		Promise.all([
+			api.catalog.depots(),
+			api.catalog.products(),
+			api.catalog.orderExpiryHours(),
+		]).then(([depots, products, orderExpiryHours]) => {
+			if (cancelled) return;
+			setState({
+				depots,
+				products,
+				orderExpiryHours,
+				updatedAt: new Date(),
+				isLoading: false,
+			});
+		});
 		return () => {
 			cancelled = true;
 		};

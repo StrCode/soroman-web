@@ -100,7 +100,8 @@ export type PlacedOrder = {
 	lines: OrderLine[];
 	total: number;
 	loading: LoadingDetails;
-	lock_expires_at: string;
+	/** Backend payment deadline; omitted when paid or not yet available. */
+	lock_expires_at?: string;
 };
 
 export type OrderStatus =
@@ -418,6 +419,8 @@ type ServerOrder = {
 	status: string;
 	paymentStatus: string;
 	totalAmount: string | number;
+	/** ISO deadline for unpaid Pending orders; null once paid/expired. */
+	expiresAt?: string | null;
 };
 
 type ServerPayment = {
@@ -450,6 +453,8 @@ type ServerListOrder = {
 	virtualAccountNumber?: string | null;
 	virtualAccountBank?: string | null;
 	virtualAccountName?: string | null;
+	/** ISO payment deadline from the backend (ORDER_EXPIRY_HOURS after place). */
+	expiresAt?: string | null;
 };
 
 /** Backend lifecycle status → the frontend's order vocabulary. */
@@ -475,22 +480,12 @@ const ORDER_STATUS_TO_SERVER: Record<OrderStatus, string> = {
 };
 
 /**
- * How long a placed order holds its quoted price. Exported so the screens that
- * PROMISE the window and the code that SETS it can never drift apart — change
- * it here and the checkout copy, the invoice countdown and the dashboard
- * badge all move together. Must stay in step with the backend's own lock.
- */
-export const PRICE_LOCK_MS = 4 * 60 * 60 * 1000;
-
-/** The same window in whole hours, for copy ("valid for 4 hours"). */
-export const PRICE_LOCK_HOURS = PRICE_LOCK_MS / 3_600_000;
-
-/**
  * The clock time an order's price stays valid until — "06:42 pm".
  *
- * Shown as an absolute time rather than a countdown: the window is four hours,
- * and "valid till 6:42 pm" is something a buyer can plan a bank transfer
- * around, where "03:58:21 left" is only noise until the last few minutes.
+ * Shown as an absolute time rather than a countdown: the payment window is
+ * hours long, and "valid till 6:42 pm" is something a buyer can plan a bank
+ * transfer around, where "03:58:21 left" is only noise until the last few
+ * minutes. The ISO comes from the backend's `expiresAt`.
  */
 export function formatPriceValidUntil(iso: string | undefined): string | null {
 	if (!iso) return null;
@@ -518,6 +513,28 @@ export function describePriceWindow(iso: string | undefined): string | null {
 	const until = formatPriceValidUntil(iso);
 	if (!until) return null;
 	return isPriceExpired(iso) ? "price expired" : `price valid till ${until}`;
+}
+
+/**
+ * Pre-order copy for the payment window. Prefer the hours from GET /api/catalog
+ * (`orderExpiryHours`); when unknown, stay neutral so we never promise a
+ * different window than the sweep enforces.
+ */
+export function paymentWindowCopy(hours: number | null | undefined): string {
+	if (hours == null || !(hours > 0)) {
+		return "Pay before the deadline shown on your invoice — after that, you reorder at the current price.";
+	}
+	const unit = hours === 1 ? "hour" : "hours";
+	return `Your price stays valid for ${hours} ${unit} from the time you order. Pay on the next step or from your dashboard — after that, you reorder at the current price.`;
+}
+
+/** Short marketing line; null when hours are not loaded yet. */
+export function paymentWindowHoursLabel(
+	hours: number | null | undefined,
+): string | null {
+	if (hours == null || !(hours > 0)) return null;
+	const unit = hours === 1 ? "hour" : "hours";
+	return `Price valid ${hours} ${unit} from the time you order`;
 }
 
 /**
@@ -564,14 +581,10 @@ function mapListOrder(o: ServerListOrder): OrderRecord {
 		payment_status: o.paymentStatus === "Paid" ? "paid" : "unpaid",
 		loading,
 		account,
-		// The price-lock deadline the invoice screen honours: one hour from
-		// placement, shown only while still awaiting payment.
-		...(status === "awaiting_payment"
-			? {
-					lock_expires_at: new Date(
-						new Date(o.createdAt).getTime() + PRICE_LOCK_MS,
-					).toISOString(),
-				}
+		// Backend `expiresAt` is the payment deadline (ORDER_EXPIRY_HOURS). Never
+		// invent one on the client — that drifted from the sweep before.
+		...(status === "awaiting_payment" && o.expiresAt
+			? { lock_expires_at: o.expiresAt }
 			: {}),
 	};
 }
@@ -686,23 +699,40 @@ type ServerCatalogDepot = {
 
 let catalogCache: {
 	at: number;
-	promise: Promise<ServerCatalogDepot[]>;
+	promise: Promise<CatalogPayload>;
 } | null = null;
 const CATALOG_TTL_MS = 30_000;
 
-function fetchCatalog(): Promise<ServerCatalogDepot[]> {
+type CatalogPayload = {
+	depots: ServerCatalogDepot[];
+	/** From ORDER_EXPIRY_HOURS; defaults to 24 if an older API omits it. */
+	orderExpiryHours: number;
+};
+
+function fetchCatalogPayload(): Promise<CatalogPayload> {
 	if (catalogCache && Date.now() - catalogCache.at < CATALOG_TTL_MS) {
 		return catalogCache.promise;
 	}
-	const promise = request<{ depots: ServerCatalogDepot[] }>(
-		"/api/catalog",
-	).then((data) => data.depots);
+	const promise = request<{
+		depots: ServerCatalogDepot[];
+		orderExpiryHours?: number;
+	}>("/api/catalog").then((data) => {
+		const hours = Number(data.orderExpiryHours);
+		return {
+			depots: data.depots,
+			orderExpiryHours: Number.isFinite(hours) && hours > 0 ? hours : 24,
+		};
+	});
 	catalogCache = { at: Date.now(), promise };
 	promise.catch(() => {
 		// A failed load must not poison the cache window.
 		catalogCache = null;
 	});
 	return promise;
+}
+
+function fetchCatalog(): Promise<ServerCatalogDepot[]> {
+	return fetchCatalogPayload().then((data) => data.depots);
 }
 
 /** "Premium Motor Spirit" → "PMS" when the server has no trade code. */
@@ -1014,6 +1044,12 @@ export const api = {
 			);
 			return depotId ? all.filter((p) => p.depot_id === depotId) : all;
 		},
+
+		/** Payment window in hours — same value the expiry sweep uses. */
+		orderExpiryHours: async (): Promise<number> => {
+			const payload = await fetchCatalogPayload();
+			return payload.orderExpiryHours;
+		},
 	},
 
 	orders: {
@@ -1084,6 +1120,7 @@ export const api = {
 				(sum, p) => sum + Number(p.order.totalAmount || 0),
 				0,
 			);
+			const first = placed[0].order;
 			return {
 				id: placed.map((p) => p.order.orderNumber).join(", "),
 				depot_id: input.depot.id,
@@ -1095,7 +1132,9 @@ export const api = {
 						? total
 						: input.lines.reduce((s, l) => s + l.unit_price * l.quantity, 0),
 				loading: input.loading,
-				lock_expires_at: new Date(Date.now() + PRICE_LOCK_MS).toISOString(),
+				...(lastPlacement.paidFromWallet || !first.expiresAt
+					? {}
+					: { lock_expires_at: first.expiresAt }),
 			};
 		},
 
