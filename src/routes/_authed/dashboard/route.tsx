@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import {
 	SidebarInset,
 	SidebarProvider,
@@ -17,6 +18,9 @@ function DashboardLayout() {
 			<SidebarInset className="min-h-0 overflow-hidden">
 				<header className="flex h-12 shrink-0 items-center gap-2 px-4">
 					<SidebarTrigger className="-ml-1" />
+					<div className="ml-auto">
+						<NotificationBell />
+					</div>
 				</header>
 				<div className="scrollbar-thin min-h-0 flex-1 overflow-auto">
 					<Outlet />

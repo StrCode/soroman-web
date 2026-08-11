@@ -1,5 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { createFileRoute, useRouterState } from "@tanstack/react-router";
+import { type ReactNode, useEffect } from "react";
 // Devices section hidden for now — restore this import with the section below.
 // import {
 //   ActiveSessionsPanel,
@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 // } from "@/components/account/devices-panel";
 import { SecurityPanel } from "@/components/account/security-panel";
 import { MICRO } from "@/components/dashboard/panel";
+import { NotificationSettingsPanel } from "@/components/notifications/notification-settings-panel";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,15 @@ export const Route = createFileRoute("/_authed/dashboard/settings")({
 
 function SettingsPage() {
 	const auth = useAuth();
+	const hash = useRouterState({ select: (s) => s.location.hash });
+
+	useEffect(() => {
+		if (hash !== "#notifications") return;
+		document
+			.getElementById("notifications")
+			?.scrollIntoView({ behavior: "smooth", block: "start" });
+	}, [hash]);
+
 	if (auth.status !== "authed") return null;
 
 	return (
@@ -30,7 +40,7 @@ function SettingsPage() {
 					<em className="font-semibold text-accent not-italic">settings</em>.
 				</h1>
 				<p className="mt-3 max-w-lg text-sm text-muted-foreground">
-					How you sign in.
+					How you sign in, and how we reach you.
 				</p>
 			</header>
 
@@ -41,6 +51,15 @@ function SettingsPage() {
 					delay="90ms"
 				>
 					<SecurityPanel />
+				</SettingsGroup>
+
+				<SettingsGroup
+					id="notifications"
+					label="Notifications"
+					hint="Channels, categories, and quiet hours"
+					delay="160ms"
+				>
+					<NotificationSettingsPanel />
 				</SettingsGroup>
 
 				{/* Devices section hidden for now. To restore: uncomment this block,
@@ -62,18 +81,24 @@ function SettingsPage() {
 }
 
 function SettingsGroup({
+	id,
 	label,
 	hint,
 	delay,
 	children,
 }: {
+	id?: string;
 	label: string;
 	hint: string;
 	delay: string;
 	children: ReactNode;
 }) {
 	return (
-		<section className="snapshot-rise" style={{ animationDelay: delay }}>
+		<section
+			id={id}
+			className="snapshot-rise scroll-mt-8"
+			style={{ animationDelay: delay }}
+		>
 			<div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 				<h2 className={cn(MICRO, "text-muted-foreground")}>{label}</h2>
 				<p className="text-xs text-muted-foreground">{hint}</p>
