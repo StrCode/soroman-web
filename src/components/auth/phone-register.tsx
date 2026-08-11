@@ -308,8 +308,10 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 						</div>
 					)}
 				</detailsForm.Field>
-				{pinField("pin", "reg-pin", "PIN")}
-				{pinField("confirm", "reg-confirm-pin", "Confirm PIN")}
+				<div className="grid gap-6 sm:grid-cols-2 sm:gap-4">
+					{pinField("pin", "reg-pin", "PIN")}
+					{pinField("confirm", "reg-confirm-pin", "Confirm PIN")}
+				</div>
 				<p className="-mt-2 text-xs text-muted-foreground">
 					You'll sign in with your email or phone number and this 6-digit PIN.
 				</p>
