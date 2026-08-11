@@ -34,8 +34,12 @@ export default function InvoiceStep({
 	const paid = credits.reduce((sum, c) => sum + c.amount, 0);
 	const remaining = Math.max(0, order.total - paid);
 	const fullyPaid = remaining === 0 && credits.length > 0;
-	const msLeft = Math.max(0, new Date(order.lock_expires_at).getTime() - now);
-	const expired = msLeft === 0 && !fullyPaid;
+	const deadlineMs = order.lock_expires_at
+		? new Date(order.lock_expires_at).getTime()
+		: null;
+	const msLeft =
+		deadlineMs == null ? Number.POSITIVE_INFINITY : Math.max(0, deadlineMs - now);
+	const expired = deadlineMs != null && msLeft === 0 && !fullyPaid;
 	// Instant payment is offered only while today's price still holds and the wallet
 	// actually covers the whole bill; otherwise the customer transfers instead.
 	const canPayFromWallet =
@@ -317,7 +321,7 @@ function PriceBadge({
 	expired,
 	paid,
 }: {
-	validUntil: string;
+	validUntil?: string;
 	expired: boolean;
 	paid: boolean;
 }) {
@@ -330,6 +334,13 @@ function PriceBadge({
 	}
 
 	const until = formatPriceValidUntil(validUntil);
+	if (!until && !expired) {
+		return (
+			<span className="text-[0.65rem] tracking-[0.15em] text-muted-foreground uppercase">
+				Awaiting payment
+			</span>
+		);
+	}
 	return (
 		<span className="text-[0.65rem] tracking-[0.15em] text-amber-700 uppercase tabular-nums dark:text-amber-500">
 			{expired || !until ? "Price expired" : `Price valid till ${until}`}
