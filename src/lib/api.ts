@@ -82,13 +82,14 @@ export type LoadingDetails =
 
 /**
  * A pickup customer's own truck: a plate (optional — it can be filled or
- * corrected at the gate) and the litres it carries. The backend caps each at
- * TRUCK_CAPACITY_LITRES and requires the per-truck quantities to sum to the
- * order quantity — the same split the WhatsApp bot collects.
+ * corrected at the gate) and the litres it carries. When trucks are declared,
+ * the backend caps each at TRUCK_CAPACITY_LITRES and requires the per-truck
+ * quantities to sum to the order quantity — same split the WhatsApp bot
+ * collects. Declaring them is optional; the gate can capture the split later.
  */
 export type TruckEntry = { plate: string; quantity: number };
 
-/** One tanker. A pickup line above this must be split across trucks. */
+/** One tanker capacity. A declared truck may not exceed this; undeclared pickups defer the split to the gate. */
 export const TRUCK_CAPACITY_LITRES = 60000;
 
 export type PlacedOrder = {
@@ -1057,7 +1058,7 @@ export const api = {
 				} else {
 					// Pickup: send this line's declared trucks. A blank plate is dropped
 					// (the backend treats truckNumber as optional). Omitted entirely when
-					// no trucks are declared, which the backend allows below one tanker.
+					// no trucks are declared — the gate captures them later at any quantity.
 					const lineTrucks = (input.trucks?.[line.product_id] ?? [])
 						.filter((t) => t.quantity > 0)
 						.map((t) => ({

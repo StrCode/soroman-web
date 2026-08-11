@@ -81,7 +81,7 @@ export function NotificationBell({ triggerClassName }: Props) {
 		: "Notifications, none unread";
 
 	const badgeEl = badge ? (
-		<span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-accent-foreground tabular-nums">
+		<span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-semibold text-accent-foreground tabular-nums">
 			{badge}
 		</span>
 	) : null;

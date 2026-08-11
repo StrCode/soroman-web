@@ -86,26 +86,46 @@ const STEP_COPY: Partial<
 
 /**
  * Declaring trucks is optional at every quantity — the depot collects plates
- * and the split at the gate, so an empty declaration always passes. A split
- * the buyer DOES start still has to be coherent: each truck ≤ one tanker, and
- * the litres summing to the line's quantity. Delivery orders never carry trucks.
- *
- * Note this is looser than the backend's rule (services/order.service.js),
- * which requires a split above one tanker — an undeclared line over
- * TRUCK_CAPACITY_LITRES is rejected server-side at placement, not here.
+ * and the split at the gate. A split the buyer DOES start still has to be
+ * coherent: each truck ≤ one tanker, and the litres summing to the line's
+ * quantity. Delivery orders never carry trucks.
  */
+const truckEntrySchema = z.object({
+	plate: z.string(),
+	quantity: z
+		.number()
+		.min(0)
+		.max(
+			TRUCK_CAPACITY_LITRES,
+			`Each truck can carry at most ${TRUCK_CAPACITY_LITRES.toLocaleString()} L`,
+		),
+});
+
+function pickupLineTrucksSchema(lineQty: number) {
+	return z.array(truckEntrySchema).superRefine((entries, ctx) => {
+		const filled = entries.filter((t) => t.quantity > 0);
+		if (filled.length === 0) return;
+
+		const sum = filled.reduce((s, t) => s + t.quantity, 0);
+		if (sum !== lineQty) {
+			ctx.addIssue({
+				code: "custom",
+				message: `Truck quantities (${sum.toLocaleString()} L) must sum to the order (${lineQty.toLocaleString()} L)`,
+			});
+		}
+	});
+}
+
 function pickupTrucksValid(
 	lines: OrderLine[],
 	trucks: Record<number, TruckEntry[]>,
 ): boolean {
-	return lines.every((line) => {
-		const filled = (trucks[line.product_id] ?? []).filter(
-			(t) => t.quantity > 0,
-		);
-		if (filled.length === 0) return true;
-		if (filled.some((t) => t.quantity > TRUCK_CAPACITY_LITRES)) return false;
-		return filled.reduce((sum, t) => sum + t.quantity, 0) === line.quantity;
-	});
+	return lines.every(
+		(line) =>
+			pickupLineTrucksSchema(line.quantity).safeParse(
+				trucks[line.product_id] ?? [],
+			).success,
+	);
 }
 
 /**
