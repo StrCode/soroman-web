@@ -519,14 +519,14 @@ function MonthFigure({
 	hint: string;
 }) {
 	return (
-		<div className="px-6 py-5">
+		<div className="min-w-0 px-6 py-5">
 			<dt className="text-[0.65rem] tracking-[0.22em] text-muted-foreground uppercase">
 				{label}
 			</dt>
-			<dd className="mt-2 text-2xl leading-none font-semibold tracking-tight tabular-nums md:text-3xl">
+			<dd className="mt-2 truncate text-xl leading-none font-semibold tracking-tight tabular-nums md:text-2xl">
 				{value}
 				{unit && (
-					<span className="ml-1 text-sm font-normal text-muted-foreground">
+					<span className="ml-1 text-xs font-normal text-muted-foreground">
 						{unit}
 					</span>
 				)}
