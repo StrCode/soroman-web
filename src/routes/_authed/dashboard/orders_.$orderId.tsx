@@ -52,6 +52,16 @@ import { ORDER_STATUS_LABEL, orderStatusTone } from "./orders";
 
 export const Route = createFileRoute("/_authed/dashboard/orders_/$orderId")({
 	component: OrderDetailPage,
+	head: ({ params }) => ({
+		meta: [
+			{ title: `Order ${params.orderId} | Soroman Energy` },
+			{
+				name: "description",
+				content:
+					"Depot order details — invoice, payment, trucks, and live fulfilment progress.",
+			},
+		],
+	}),
 });
 
 /** The six tracking stages, in order — mirrors the public tracking page. */

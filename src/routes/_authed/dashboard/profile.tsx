@@ -7,6 +7,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/profile")({
 	component: ProfilePage,
+	head: () => ({
+		meta: [
+			{ title: "Profile | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Update your Soroman profile details and payment preferences.",
+			},
+		],
+	}),
 });
 
 function ProfilePage() {

@@ -52,6 +52,16 @@ export const Route = createFileRoute(
 	"/_authed/dashboard/dangote-delivery_/$orderId",
 )({
 	component: DangoteDeliveryOrderDetailPage,
+	head: ({ params }) => ({
+		meta: [
+			{ title: `Dangote order ${params.orderId} | Soroman Energy` },
+			{
+				name: "description",
+				content:
+					"Dangote delivery order details — quote, licence status, payment, and progress.",
+			},
+		],
+	}),
 });
 
 /**

@@ -11,6 +11,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/commissions")({
 	component: CommissionsPage,
+	head: () => ({
+		meta: [
+			{ title: "Commissions | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"See commission earnings on referred Soroman depot orders, by date and depot.",
+			},
+		],
+	}),
 });
 
 const PAGE_SIZE = 10;

@@ -5,7 +5,14 @@ import { COMPANY_NAME, LOADING_HOURS, SUPPORT_EMAIL } from "@/lib/company";
 export const Route = createFileRoute("/_site/terms")({
 	component: TermsPage,
 	head: () => ({
-		meta: [{ title: "Terms & Conditions | Soroman" }],
+		meta: [
+			{ title: "Terms & Conditions | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Terms for browsing depot prices, placing orders, paying by bank transfer, and using Soroman fulfilment.",
+			},
+		],
 	}),
 });
 

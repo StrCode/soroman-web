@@ -8,6 +8,16 @@ import TrackOrder from "@/components/landing/track-order";
 
 export const Route = createFileRoute("/_site/")({
 	component: HomePage,
+	head: () => ({
+		meta: [
+			{ title: "Soroman Energy | Order fuel at today's depot prices" },
+			{
+				name: "description",
+				content:
+					"Live PMS and AGO depot prices across Nigeria. Order fuel, pay by bank transfer and track every truck to the gate.",
+			},
+		],
+	}),
 });
 
 function HomePage() {

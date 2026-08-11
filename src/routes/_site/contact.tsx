@@ -13,6 +13,16 @@ import {
 
 export const Route = createFileRoute("/_site/contact")({
 	component: ContactPage,
+	head: () => ({
+		meta: [
+			{ title: "Contact | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Reach the Soroman desk by WhatsApp, phone, or email during loading hours for orders, payments, and depot questions.",
+			},
+		],
+	}),
 });
 
 function ContactPage() {

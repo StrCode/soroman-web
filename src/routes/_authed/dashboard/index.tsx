@@ -40,6 +40,16 @@ import {
 
 export const Route = createFileRoute("/_authed/dashboard/")({
 	component: OverviewPage,
+	head: () => ({
+		meta: [
+			{ title: "Dashboard | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Your Soroman overview — recent orders, wallet balance, depot prices, and quick reorder.",
+			},
+		],
+	}),
 });
 
 /**

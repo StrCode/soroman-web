@@ -18,6 +18,16 @@ const PAGE_SIZE = 10;
 
 export const Route = createFileRoute("/_authed/dashboard/cooking-gas")({
 	component: CookingGasOrdersPage,
+	head: () => ({
+		meta: [
+			{ title: "Cooking gas orders | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Track cooking gas requests — review status, approved prices, and payment details.",
+			},
+		],
+	}),
 });
 
 /** Customer-facing names for the order's wire statuses. */

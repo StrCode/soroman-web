@@ -16,6 +16,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_site/t/$ref")({
 	component: TrackingPage,
+	head: ({ params }) => ({
+		meta: [
+			{ title: `Track ${params.ref} | Soroman Energy` },
+			{
+				name: "description",
+				content:
+					"Live status for your Soroman fuel order — from payment through loading to completion.",
+			},
+		],
+	}),
 });
 
 const LABEL = "text-xs tracking-[0.25em] uppercase";

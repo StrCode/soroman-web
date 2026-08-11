@@ -34,6 +34,16 @@ export const Route = createFileRoute("/_slim/login")({
 		}
 	},
 	component: LoginPage,
+	head: () => ({
+		meta: [
+			{ title: "Sign in | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Sign in to Soroman with a one-time phone code or your PIN to manage orders, payments, and tracking.",
+			},
+		],
+	}),
 });
 
 function LoginPage() {

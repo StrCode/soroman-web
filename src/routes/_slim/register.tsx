@@ -15,6 +15,16 @@ export const Route = createFileRoute("/_slim/register")({
 		}
 	},
 	component: RegisterPage,
+	head: () => ({
+		meta: [
+			{ title: "Create account | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Create a Soroman account with your name and phone. Verify with one SMS code — no password required.",
+			},
+		],
+	}),
 });
 
 function RegisterPage() {

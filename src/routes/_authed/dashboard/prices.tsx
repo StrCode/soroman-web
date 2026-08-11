@@ -5,6 +5,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/prices")({
 	component: PricesPage,
+	head: () => ({
+		meta: [
+			{ title: "Depot prices | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Live PMS and AGO prices across Soroman depots — open status, today's rate, and last update.",
+			},
+		],
+	}),
 });
 
 /**

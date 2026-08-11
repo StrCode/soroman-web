@@ -22,6 +22,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/orders")({
 	component: OrdersPage,
+	head: () => ({
+		meta: [
+			{ title: "Depot orders | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"View and manage your depot fuel orders — pay invoices, track loading, and reorder.",
+			},
+		],
+	}),
 });
 
 /** Plain-word label for each lifecycle status, shown in the chip and filters. */

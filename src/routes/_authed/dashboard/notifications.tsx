@@ -37,6 +37,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/notifications")({
 	component: NotificationsPage,
+	head: () => ({
+		meta: [
+			{ title: "Notifications | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Your Soroman inbox — order, payment, delivery, and account updates.",
+			},
+		],
+	}),
 });
 
 const PAGE_SIZE = 20;

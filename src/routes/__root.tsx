@@ -28,7 +28,7 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 	head: () => ({
 		meta: [
 			{
-				title: "Soroman | Order fuel at today's depot prices",
+				title: "Soroman Energy | Order fuel at today's depot prices",
 			},
 			{
 				name: "description",

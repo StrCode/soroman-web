@@ -69,6 +69,16 @@ const FIELD_LABEL =
 
 export const Route = createFileRoute("/_slim/order_/cooking-gas")({
 	component: CookingGasWizard,
+	head: () => ({
+		meta: [
+			{ title: "Order cooking gas | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Request cooking gas cylinders from Soroman. Pick a station, size, and quantity — delivery is priced after review.",
+			},
+		],
+	}),
 });
 
 /**

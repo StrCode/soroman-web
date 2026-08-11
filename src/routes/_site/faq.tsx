@@ -4,6 +4,16 @@ import { LOADING_HOURS } from "@/lib/company";
 
 export const Route = createFileRoute("/_site/faq")({
 	component: FaqPage,
+	head: () => ({
+		meta: [
+			{ title: "FAQ | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Answers on ordering fuel, paying by bank transfer, loading windows, tracking, and your Soroman account.",
+			},
+		],
+	}),
 });
 
 /*

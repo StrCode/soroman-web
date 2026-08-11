@@ -31,6 +31,16 @@ export const Route = createFileRoute(
 	"/_authed/dashboard/cooking-gas_/$orderId",
 )({
 	component: CookingGasOrderDetailPage,
+	head: ({ params }) => ({
+		meta: [
+			{ title: `Cooking gas ${params.orderId} | Soroman Energy` },
+			{
+				name: "description",
+				content:
+					"Cooking gas request details — review status, quoted price, and payment instructions.",
+			},
+		],
+	}),
 });
 
 const formatDate = (iso?: string) =>

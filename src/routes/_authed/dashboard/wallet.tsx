@@ -13,6 +13,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/wallet")({
 	component: WalletPage,
+	head: () => ({
+		meta: [
+			{ title: "Wallet | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"View your Soroman wallet balance, virtual account details, and transaction history.",
+			},
+		],
+	}),
 });
 
 const PAGE_SIZE = 20;

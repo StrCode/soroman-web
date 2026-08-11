@@ -136,6 +136,16 @@ function pickupTrucksValid(
 export const Route = createFileRoute("/_slim/order_/depot")({
 	validateSearch: searchSchema,
 	component: OrderPage,
+	head: () => ({
+		meta: [
+			{ title: "Order depot fuel | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Order PMS or AGO at today's depot prices. Choose pickup or Soroman trucks, pay by bank transfer, and track to the gate.",
+			},
+		],
+	}),
 });
 
 function OrderPage() {

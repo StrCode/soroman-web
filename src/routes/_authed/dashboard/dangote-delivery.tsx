@@ -26,6 +26,16 @@ const PAGE_SIZE = 10;
 
 export const Route = createFileRoute("/_authed/dashboard/dangote-delivery")({
 	component: DangoteDeliveryOrdersPage,
+	head: () => ({
+		meta: [
+			{ title: "Dangote orders | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Track and pay your Dangote delivery orders — review status, quotes, and payment details.",
+			},
+		],
+	}),
 });
 
 /** Chip tone per state: rejection/cancel alerts, a confirmed price reads positive. */

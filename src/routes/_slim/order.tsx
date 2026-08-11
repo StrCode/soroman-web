@@ -20,6 +20,16 @@ import { cn } from "@/lib/utils";
  */
 export const Route = createFileRoute("/_slim/order")({
 	component: ChooseProductPage,
+	head: () => ({
+		meta: [
+			{ title: "New order | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Order depot fuel, Dangote delivery, or cooking gas from Soroman. Browse prices as a guest, then confirm with your phone.",
+			},
+		],
+	}),
 });
 
 const MONO_LABEL =

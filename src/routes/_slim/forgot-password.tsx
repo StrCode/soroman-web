@@ -17,6 +17,16 @@ export const Route = createFileRoute("/_slim/forgot-password")({
 		}
 	},
 	component: ForgotPasswordPage,
+	head: () => ({
+		meta: [
+			{ title: "Forgot password | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Soroman accounts use your phone. Sign in with a one-time code, then set a new password from account settings.",
+			},
+		],
+	}),
 });
 
 /**

@@ -5,7 +5,14 @@ import { COMPANY_NAME, SUPPORT_EMAIL } from "@/lib/company";
 export const Route = createFileRoute("/_site/privacy")({
 	component: PrivacyPage,
 	head: () => ({
-		meta: [{ title: "Privacy Policy | Soroman" }],
+		meta: [
+			{ title: "Privacy Policy | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"How Soroman collects, uses, and protects your phone number, order details, and payment information.",
+			},
+		],
 	}),
 });
 

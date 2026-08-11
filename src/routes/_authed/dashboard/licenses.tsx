@@ -35,6 +35,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/licenses")({
 	component: LicensesPage,
+	head: () => ({
+		meta: [
+			{ title: "Licenses | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Manage company licences for Dangote delivery orders — upload, track status, and reuse on new requests.",
+			},
+		],
+	}),
 });
 
 const PAGE_SIZE = 10;

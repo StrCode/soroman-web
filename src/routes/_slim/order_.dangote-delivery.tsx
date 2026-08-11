@@ -82,6 +82,16 @@ const STEP_COPY: Record<
  */
 export const Route = createFileRoute("/_slim/order_/dangote-delivery")({
 	component: DangoteDeliveryOrderPage,
+	head: () => ({
+		meta: [
+			{ title: "Dangote delivery | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Place a Dangote delivery order with Soroman. Submit product, quantity, company, and licence details for pricing.",
+			},
+		],
+	}),
 });
 
 function DangoteDeliveryOrderPage() {

@@ -13,6 +13,16 @@ import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/dashboard/settings")({
 	component: SettingsPage,
+	head: () => ({
+		meta: [
+			{ title: "Settings | Soroman Energy" },
+			{
+				name: "description",
+				content:
+					"Manage sign-in methods, notification preferences, and account security for your Soroman account.",
+			},
+		],
+	}),
 });
 
 function SettingsPage() {
