@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
 	CheckCircle2,
 	ClipboardCheck,
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/card";
 import { NativeSelectOption } from "@/components/ui/native-select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/env";
 import { ApiError } from "@/lib/api";
 import { authStore, useAuth } from "@/lib/auth";
 import {
@@ -68,6 +69,11 @@ const FIELD_LABEL =
 	"text-[0.65rem] tracking-[0.18em] text-muted-foreground uppercase";
 
 export const Route = createFileRoute("/_slim/order_/cooking-gas")({
+	beforeLoad: () => {
+		if (!env.VITE_COOKING_GAS_ENABLED) {
+			throw redirect({ to: "/order" });
+		}
+	},
 	component: CookingGasWizard,
 	head: () => ({
 		meta: [

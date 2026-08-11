@@ -1,10 +1,11 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect, useNavigate } from "@tanstack/react-router";
 import { ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MICRO } from "@/components/dashboard/panel";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import { env } from "@/env";
 import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	type LpgOrderRequest,
@@ -23,6 +24,11 @@ import { cn } from "@/lib/utils";
 const PAGE_SIZE = 10;
 
 export const Route = createFileRoute("/_authed/dashboard/cooking-gas")({
+	beforeLoad: () => {
+		if (!env.VITE_COOKING_GAS_ENABLED) {
+			throw redirect({ to: "/dashboard" });
+		}
+	},
 	component: CookingGasOrdersPage,
 	head: () => ({
 		meta: [

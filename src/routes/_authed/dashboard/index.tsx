@@ -10,6 +10,7 @@ import WalletCard from "@/components/dashboard/wallet-card";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/env";
 import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	api,
@@ -173,6 +174,7 @@ function OverviewPage() {
 				status: "Approved",
 				paymentStatus: "Unpaid",
 			}),
+		enabled: env.VITE_COOKING_GAS_ENABLED,
 		refetchInterval: unpaidPoll,
 		refetchIntervalInBackground: false,
 	});
@@ -284,7 +286,7 @@ function OverviewPage() {
 				</div>
 			)}
 
-			{cookingGasAttention.length > 0 && (
+			{env.VITE_COOKING_GAS_ENABLED && cookingGasAttention.length > 0 && (
 				<div className="snapshot-rise mt-6" style={{ animationDelay: "120ms" }}>
 					<CookingGasAttentionPanel orders={cookingGasAttention} />
 				</div>
