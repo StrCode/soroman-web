@@ -7,6 +7,7 @@
  * `data.orderNumber` when present.
  */
 
+import { env } from "@/env";
 import type { Notification } from "./types";
 
 export type NotificationHref = {
@@ -62,6 +63,7 @@ export function resolveNotificationHref(
 		};
 	}
 	if (requestId && notification.entityType === "lpg_request") {
+		if (!env.VITE_COOKING_GAS_ENABLED) return { to: "/dashboard" };
 		return {
 			to: "/dashboard/cooking-gas/$orderId",
 			params: { orderId: requestId },
@@ -100,6 +102,7 @@ export function resolveNotificationHref(
 
 	const lpgMatch = path.match(/^\/lpg-orders\/([^/]+)\/?$/);
 	if (lpgMatch) {
+		if (!env.VITE_COOKING_GAS_ENABLED) return { to: "/dashboard" };
 		return {
 			to: "/dashboard/cooking-gas/$orderId",
 			params: { orderId: lpgMatch[1] },

@@ -6,8 +6,17 @@
  * The real model is a QUOTE REQUEST, not an instant-pay cart: a station quotes
  * a price per Kg, the customer picks one cylinder size + quantity, and staff
  * price delivery and approve it (Pending Review → …). One size per request.
+ *
+ * All calls no-op when VITE_COOKING_GAS_ENABLED is off — no network request.
  */
+import { env } from "@/env";
 import { request } from "@/lib/http";
+
+function assertCookingGasEnabled(): void {
+	if (!env.VITE_COOKING_GAS_ENABLED) {
+		throw new Error("Cooking gas is coming soon.");
+	}
+}
 
 /** A cylinder size a station currently has in stock. */
 export type LpgCylinder = { sizeKg: number; available: number };
@@ -47,6 +56,7 @@ const ORDERS = "/api/customer/lpg-orders";
 
 /** Public: open LPG stations with price/Kg and in-stock cylinder sizes. */
 export async function getLpgCatalog(): Promise<LpgStation[]> {
+	assertCookingGasEnabled();
 	const { stations } = await request<{ stations: LpgStation[] }>(CATALOG);
 	return stations;
 }
@@ -64,6 +74,7 @@ export type CreateLpgOrderInput = {
 export async function createLpgOrder(
 	input: CreateLpgOrderInput,
 ): Promise<LpgOrderRequest> {
+	assertCookingGasEnabled();
 	const { request: created } = await request<{ request: LpgOrderRequest }>(
 		ORDERS,
 		{
@@ -98,6 +109,7 @@ export type LpgOrdersListResult = {
 export async function listMyLpgOrders(
 	params: LpgOrdersListParams = {},
 ): Promise<LpgOrdersListResult> {
+	assertCookingGasEnabled();
 	const query = new URLSearchParams();
 	query.set("page", String(params.page ?? 1));
 	query.set("limit", String(params.limit ?? 25));
@@ -110,6 +122,7 @@ export async function listMyLpgOrders(
 
 /** One of the customer's own requests. */
 export async function getMyLpgOrder(id: number): Promise<LpgOrderRequest> {
+	assertCookingGasEnabled();
 	const { request: found } = await request<{ request: LpgOrderRequest }>(
 		`${ORDERS}/${id}`,
 	);

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import {
 	Check,
 	CircleAlert,
@@ -19,6 +19,7 @@ import {
 import { OrderDetailSkeleton } from "@/components/orders/order-detail-skeleton";
 import { Button } from "@/components/ui/button";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
+import { env } from "@/env";
 import { usePageVisible } from "@/hooks/use-page-visible";
 import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
@@ -32,6 +33,11 @@ import { CG_STATUS_LABELS, cgStatusTone } from "./cooking-gas";
 export const Route = createFileRoute(
 	"/_authed/dashboard/cooking-gas_/$orderId",
 )({
+	beforeLoad: () => {
+		if (!env.VITE_COOKING_GAS_ENABLED) {
+			throw redirect({ to: "/dashboard" });
+		}
+	},
 	component: CookingGasOrderDetailPage,
 	head: ({ params }) => ({
 		meta: [

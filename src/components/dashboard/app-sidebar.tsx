@@ -38,6 +38,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { env } from "@/env";
 
 import { formatPhoneForDisplay } from "@/lib/api";
 import { authStore, useAuth } from "@/lib/auth";
@@ -54,7 +55,15 @@ const MANAGE = [
 	{ label: "Depot orders", to: "/dashboard/orders", icon: Package },
 	{ label: "Dangote orders", to: "/dashboard/dangote-delivery", icon: Factory },
 	{ label: "Licenses", to: "/dashboard/licenses", icon: FileCheck },
-	{ label: "Cooking gas orders", to: "/dashboard/cooking-gas", icon: Flame },
+	...(env.VITE_COOKING_GAS_ENABLED
+		? ([
+				{
+					label: "Cooking gas orders",
+					to: "/dashboard/cooking-gas",
+					icon: Flame,
+				},
+			] as const)
+		: []),
 ] as const;
 
 const ACCOUNT = [

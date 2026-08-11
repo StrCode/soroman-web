@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { env } from "@/env";
 
 import { formatPhoneForDisplay } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -185,9 +186,14 @@ function ChooseProductPage() {
 						idx="03"
 						title="Cooking Gas"
 						description="Refill your cylinders without leaving the house. Pick the sizes you need, pay, and follow the delivery to your door."
-						priceLabel="Today's price"
-						priceValue="₦4,500/cyl"
-						go="Order now →"
+						priceLabel={
+							env.VITE_COOKING_GAS_ENABLED ? "Today's price" : "Availability"
+						}
+						priceValue={
+							env.VITE_COOKING_GAS_ENABLED ? "₦4,500/cyl" : "Coming soon"
+						}
+						go={env.VITE_COOKING_GAS_ENABLED ? "Order now →" : "Coming soon"}
+						comingSoon={!env.VITE_COOKING_GAS_ENABLED}
 					/>
 				</div>
 			</main>
@@ -225,6 +231,7 @@ function ChannelBox({
 	priceLabel,
 	priceValue,
 	go,
+	comingSoon = false,
 }: {
 	to: string;
 	idx: string;
@@ -233,12 +240,11 @@ function ChannelBox({
 	priceLabel: string;
 	priceValue: string | null;
 	go: string;
+	/** Non-navigating shell — no link, no endpoint traffic. */
+	comingSoon?: boolean;
 }) {
-	return (
-		<Link
-			to={to}
-			className="group ease-luxe flex flex-col rounded-xl border border-foreground/15 bg-card p-5 transition-all duration-250 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.06)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.99] lg:min-h-70"
-		>
+	const body = (
+		<>
 			<span className="font-mono text-xs font-semibold text-muted-foreground">
 				{idx}
 			</span>
@@ -257,10 +263,37 @@ function ChannelBox({
 						</div>
 					)}
 				</div>
-				<span className="ease-luxe font-mono text-[0.68rem] font-semibold tracking-[0.1em] whitespace-nowrap text-muted-foreground uppercase transition-colors duration-250 group-hover:text-accent">
+				<span
+					className={cn(
+						"font-mono text-[0.68rem] font-semibold tracking-[0.1em] whitespace-nowrap uppercase",
+						comingSoon
+							? "text-muted-foreground/70"
+							: "ease-luxe text-muted-foreground transition-colors duration-250 group-hover:text-accent",
+					)}
+				>
 					{go}
 				</span>
 			</div>
+		</>
+	);
+
+	if (comingSoon) {
+		return (
+			<div
+				aria-disabled="true"
+				className="flex flex-col rounded-xl border border-foreground/10 bg-card/70 p-5 opacity-70 lg:min-h-70"
+			>
+				{body}
+			</div>
+		);
+	}
+
+	return (
+		<Link
+			to={to}
+			className="group ease-luxe flex flex-col rounded-xl border border-foreground/15 bg-card p-5 transition-all duration-250 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_12px_28px_rgba(0,0,0,0.06)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.99] lg:min-h-70"
+		>
+			{body}
 		</Link>
 	);
 }
