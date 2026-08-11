@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { CircleUserRound, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { NotificationBell } from "@/components/notifications/bell";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -11,6 +12,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatPhoneForDisplay } from "@/lib/api";
 import { authStore, useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
@@ -38,7 +40,15 @@ export default function Header() {
 	const [menuOpen, setMenuOpen] = useState(false);
 	const [heroCtaOnScreen, setHeroCtaOnScreen] = useState(true);
 	const sentinel = useRef<HTMLDivElement>(null);
+	const mobileNavRef = useRef<HTMLElement>(null);
 	const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+	const isAuthed = auth.status === "authed";
+	const isGuest = auth.status === "guest";
+	const isAuthLoading = auth.status === "loading";
+	// Signed-in buyers jump into the order chooser; guests land on prices first.
+	const startOrderTo = isAuthed ? ("/order" as const) : ("/" as const);
+	const startOrderHash = isAuthed ? undefined : ("prices" as const);
 
 	/**
 	 * The header is transparent over the hero and only earns its background once
@@ -85,12 +95,26 @@ export default function Header() {
 		return () => window.removeEventListener("keydown", onKey);
 	}, [menuOpen]);
 
+	// Lock page scroll while the mobile panel is open, and move focus into it.
+	useEffect(() => {
+		if (!menuOpen) return;
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		const first = mobileNavRef.current?.querySelector<HTMLElement>(
+			"a[href], button:not([disabled])",
+		);
+		first?.focus();
+		return () => {
+			document.body.style.overflow = prev;
+		};
+	}, [menuOpen]);
+
 	return (
 		<>
 			<div ref={sentinel} aria-hidden className="h-px" />
 			<header
 				className={cn(
-					"sticky top-0 z-40 -mt-px border-b transition-colors duration-700 ease-luxe",
+					"sticky top-0 z-40 -mt-px border-b pt-[env(safe-area-inset-top)] transition-colors duration-700 ease-luxe motion-reduce:transition-none",
 					stuck || menuOpen
 						? "border-border bg-background/80 backdrop-blur-md"
 						: "border-transparent bg-transparent",
@@ -102,7 +126,11 @@ export default function Header() {
 				 * over the page, not a row in it, so it reads as its own band.
 				 */}
 				<div className="mx-auto grid h-16 w-full max-w-[1600px] grid-cols-[auto_1fr_auto] items-center gap-6 px-5 sm:px-8 md:h-20 lg:px-12">
-					<Link to="/" className="flex shrink-0 items-center">
+					<Link
+						to="/"
+						aria-label="Soroman home"
+						className="flex shrink-0 items-center"
+					>
 						{/*
 						 * The official full logo. Its wordmark is near-black (#272827), so
 						 * on the charcoal dark ground it would sit at ~1.1:1 and vanish.
@@ -111,20 +139,23 @@ export default function Header() {
 						 */}
 						<img
 							src="/logo-full.png"
-							alt="Soroman"
+							alt=""
 							width={770}
 							height={136}
 							className="h-5 w-auto md:h-6 dark:hue-rotate-180 dark:invert"
 						/>
 					</Link>
 
-					<nav className="hidden items-center justify-center gap-9 lg:flex">
+					<nav
+						aria-label="Primary"
+						className="hidden items-center justify-center gap-9 lg:flex"
+					>
 						{NAV.map(({ label, to, hash }) => (
 							<Link
 								key={label}
 								to={to}
 								hash={hash}
-								className="group relative py-1 text-sm text-muted-foreground transition-colors duration-500 ease-luxe hover:text-foreground"
+								className="group relative py-1 text-sm text-muted-foreground transition-colors duration-500 ease-luxe hover:text-foreground motion-reduce:transition-none"
 								activeOptions={{ exact: true, includeHash: false }}
 								// Anchors on the landing page all match "/", so letting them
 								// claim "active" would light up two links at once. Only real
@@ -137,7 +168,7 @@ export default function Header() {
 								<span
 									aria-hidden
 									className={cn(
-										"absolute inset-x-0 -bottom-0.5 h-px origin-center scale-x-0 bg-accent transition-transform duration-500 ease-luxe group-hover:scale-x-100",
+										"absolute inset-x-0 -bottom-0.5 h-px origin-center scale-x-0 bg-accent transition-transform duration-500 ease-luxe group-hover:scale-x-100 motion-reduce:transition-none",
 										!hash && "group-data-[status=active]:scale-x-100",
 									)}
 								/>
@@ -146,64 +177,79 @@ export default function Header() {
 					</nav>
 
 					<div className="flex shrink-0 items-center justify-end gap-1 sm:gap-2">
-						{/*
-						 * One account affordance in the same place in both states: a person
-						 * icon that signs you in, or opens your account once you are.
-						 */}
-						{auth.status === "authed" && (
-							<DropdownMenu>
-								<DropdownMenuTrigger
-									render={
-										<Button
-											variant="ghost"
-											size="icon-sm"
-											className={TOUCH_TARGET}
-										/>
-									}
-								>
-									<CircleUserRound />
-									<span className="sr-only">Account</span>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end">
-									<DropdownMenuGroup>
-										<DropdownMenuLabel>
-											{auth.customer.name ||
-												formatPhoneForDisplay(auth.customer.phone)}
-										</DropdownMenuLabel>
-										<DropdownMenuSeparator />
-										<DropdownMenuItem
-											onClick={() => void navigate({ to: "/dashboard" })}
-										>
-											Dashboard
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() =>
-												void navigate({ to: "/dashboard/profile" })
-											}
-										>
-											Profile
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() =>
-												void navigate({ to: "/dashboard/settings" })
-											}
-										>
-											Settings
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onClick={() =>
-												void authStore
-													.logout()
-													.then(() => navigate({ to: "/" }))
-											}
-										>
-											Sign out
-										</DropdownMenuItem>
-									</DropdownMenuGroup>
-								</DropdownMenuContent>
-							</DropdownMenu>
+						{isAuthLoading && (
+							<>
+								<Skeleton className={cn("rounded-lg", TOUCH_TARGET)} />
+								<Skeleton className={cn("rounded-lg", TOUCH_TARGET)} />
+							</>
 						)}
-						{auth.status === "guest" && (
+
+						{isAuthed && (
+							<>
+								{/*
+								 * Signed-in only: inbox next to account. Guests never see the
+								 * bell. Slim/checkout chrome deliberately omits this.
+								 */}
+								<NotificationBell triggerClassName={TOUCH_TARGET} />
+								{/*
+								 * One account affordance in the same place in both states: a
+								 * person icon that signs you in, or opens your account once
+								 * you are.
+								 */}
+								<DropdownMenu>
+									<DropdownMenuTrigger
+										render={
+											<Button
+												variant="ghost"
+												size="icon-sm"
+												className={TOUCH_TARGET}
+											/>
+										}
+									>
+										<CircleUserRound />
+										<span className="sr-only">Account</span>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuGroup>
+											<DropdownMenuLabel>
+												{auth.customer.name ||
+													formatPhoneForDisplay(auth.customer.phone)}
+											</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<DropdownMenuItem render={<Link to="/dashboard" />}>
+												Dashboard
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												render={<Link to="/dashboard/notifications" />}
+											>
+												Notifications
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												render={<Link to="/dashboard/profile" />}
+											>
+												Profile
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												render={<Link to="/dashboard/settings" />}
+											>
+												Settings
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={() =>
+													void authStore
+														.logout()
+														.then(() => navigate({ to: "/" }))
+												}
+											>
+												Sign out
+											</DropdownMenuItem>
+										</DropdownMenuGroup>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</>
+						)}
+
+						{isGuest && (
 							<Button
 								variant="ghost"
 								size="icon-sm"
@@ -224,7 +270,7 @@ export default function Header() {
 								nativeButton={false}
 								className="hidden md:inline-flex"
 								render={
-									<Link to="/" hash="prices">
+									<Link to={startOrderTo} hash={startOrderHash}>
 										Start an order
 									</Link>
 								}
@@ -253,8 +299,10 @@ export default function Header() {
 				 */}
 				{menuOpen && (
 					<nav
+						ref={mobileNavRef}
 						id="mobile-nav"
-						className="border-t border-border bg-background lg:hidden"
+						aria-label="Mobile"
+						className="max-h-[calc(100dvh-4rem-env(safe-area-inset-top))] overflow-y-auto overscroll-contain border-t border-border bg-background lg:hidden"
 					>
 						<div className="mx-auto w-full max-w-[1600px] px-5 py-2 sm:px-8">
 							{NAV.map(({ label, to, hash }) => (
@@ -270,20 +318,38 @@ export default function Header() {
 									{label}
 								</Link>
 							))}
+							{isAuthed && (
+								<>
+									<Link
+										to="/dashboard"
+										onClick={() => setMenuOpen(false)}
+										className="block border-b border-border py-4 text-base text-muted-foreground"
+									>
+										Dashboard
+									</Link>
+									<Link
+										to="/dashboard/notifications"
+										onClick={() => setMenuOpen(false)}
+										className="block border-b border-border py-4 text-base text-muted-foreground"
+									>
+										Notifications
+									</Link>
+								</>
+							)}
 							<div className="flex flex-col gap-3 py-4">
 								<Button
 									nativeButton={false}
 									render={
 										<Link
-											to="/"
-											hash="prices"
+											to={startOrderTo}
+											hash={startOrderHash}
 											onClick={() => setMenuOpen(false)}
 										>
 											Start an order
 										</Link>
 									}
 								/>
-								{auth.status === "guest" && (
+								{isGuest && (
 									<Button
 										variant="secondary"
 										nativeButton={false}
@@ -293,6 +359,19 @@ export default function Header() {
 											</Link>
 										}
 									/>
+								)}
+								{isAuthed && (
+									<Button
+										variant="secondary"
+										onClick={() =>
+											void authStore.logout().then(() => {
+												setMenuOpen(false);
+												void navigate({ to: "/" });
+											})
+										}
+									>
+										Sign out
+									</Button>
 								)}
 							</div>
 						</div>

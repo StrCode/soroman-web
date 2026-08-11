@@ -26,8 +26,14 @@ import {
 } from "@/lib/notifications/deep-link";
 import { notificationKeys } from "@/lib/notifications/keys";
 import { useStream } from "@/lib/notifications/use-stream";
+import { cn } from "@/lib/utils";
 
-export function NotificationBell() {
+type Props = {
+	/** Extra classes on the trigger button (e.g. site-header touch target). */
+	triggerClassName?: string;
+};
+
+export function NotificationBell({ triggerClassName }: Props) {
 	const isMobile = useIsMobile();
 	const auth = useAuth();
 	const router = useRouter();
@@ -35,8 +41,10 @@ export function NotificationBell() {
 	const openRef = useRef(open);
 	openRef.current = open;
 
+	const enabled = auth.status === "authed";
+
 	const { connected } = useStream({
-		enabled: auth.status === "authed",
+		enabled,
 		onNotification: (notification) => {
 			// Panel already shows the row via cache — skip the toast while open.
 			if (openRef.current) return;
@@ -57,11 +65,13 @@ export function NotificationBell() {
 	const { data } = useQuery({
 		queryKey: notificationKeys.unread(),
 		queryFn: () => notificationsApi.unreadCount(),
-		enabled: auth.status === "authed",
+		enabled,
 		// SSE is the fast path; poll only when the stream is down.
 		refetchInterval: connected ? false : 60_000,
 		refetchOnWindowFocus: true,
 	});
+
+	if (!enabled) return null;
 
 	const unreadCount = data?.unreadCount ?? 0;
 	const badge =
@@ -76,19 +86,19 @@ export function NotificationBell() {
 		</span>
 	) : null;
 
+	const trigger = (
+		<Button
+			variant="ghost"
+			size="icon-sm"
+			className={cn("relative", triggerClassName)}
+			aria-label={ariaLabel}
+		/>
+	);
+
 	if (isMobile) {
 		return (
 			<Sheet open={open} onOpenChange={setOpen}>
-				<SheetTrigger
-					render={
-						<Button
-							variant="ghost"
-							size="icon"
-							className="relative"
-							aria-label={ariaLabel}
-						/>
-					}
-				>
+				<SheetTrigger render={trigger}>
 					<Bell />
 					{badgeEl}
 				</SheetTrigger>
@@ -106,16 +116,7 @@ export function NotificationBell() {
 
 	return (
 		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger
-				render={
-					<Button
-						variant="ghost"
-						size="icon"
-						className="relative"
-						aria-label={ariaLabel}
-					/>
-				}
-			>
+			<PopoverTrigger render={trigger}>
 				<Bell />
 				{badgeEl}
 			</PopoverTrigger>
