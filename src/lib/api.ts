@@ -537,6 +537,15 @@ export function paymentWindowHoursLabel(
 	return `Price valid ${hours} ${unit} from the time you order`;
 }
 
+/** "24 hours" / "1 hour" for FAQ and legal prose; null until catalog loads. */
+export function formatExpiryHoursPhrase(
+	hours: number | null | undefined,
+): string | null {
+	if (hours == null || !(hours > 0)) return null;
+	const unit = hours === 1 ? "hour" : "hours";
+	return `${hours} ${unit}`;
+}
+
 /**
  * A server order row → the OrderRecord the dashboard and history render. The
  * backend is one product per order, so an order is always a single line. The
