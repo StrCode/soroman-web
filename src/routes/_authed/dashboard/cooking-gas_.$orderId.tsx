@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, CircleAlert } from "lucide-react";
+import {
+	Check,
+	CircleAlert,
+	Copy,
+	MessageCircle,
+	PackagePlus,
+} from "lucide-react";
 import { toast } from "sonner";
 import { MICRO } from "@/components/dashboard/panel";
 import {
@@ -355,12 +361,17 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 								</p>
 							)}
 							<RailAction onClick={() => void copyRef()}>
+								<Copy />
 								Copy reference
 							</RailAction>
 							<Link to="/order/cooking-gas" className={railActionClass()}>
+								<PackagePlus />
 								Order again
 							</Link>
-							<RailAction href={WHATSAPP_URL}>Contact support</RailAction>
+							<RailAction href={WHATSAPP_URL}>
+								<MessageCircle />
+								Contact support
+							</RailAction>
 						</div>
 					</DetailRailCard>
 

@@ -76,7 +76,7 @@ export function DetailRailCard({
 
 export function railActionClass(destructive?: boolean) {
 	return cn(
-		"ease-luxe flex w-full cursor-pointer items-center rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors duration-200",
+		"ease-luxe flex w-full cursor-pointer items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium transition-colors duration-200 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
 		destructive
 			? "text-destructive hover:bg-destructive/10"
 			: "text-foreground/80 hover:bg-muted/60 hover:text-foreground",

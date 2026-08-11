@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Check } from "lucide-react";
+import {
+	Check,
+	Copy,
+	MapPin,
+	MessageCircle,
+	RotateCcw,
+	Truck,
+	Wallet,
+	XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MICRO } from "@/components/dashboard/panel";
@@ -389,6 +398,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 										disabled={payFromWallet.isPending}
 										onClick={() => payFromWallet.mutate()}
 									>
+										<Wallet data-icon="inline-start" />
 										{payFromWallet.isPending
 											? "Paying…"
 											: `Pay ${formatNaira(order.total)} from wallet`}
@@ -410,6 +420,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 							)}
 							{canEditTrucks && (
 								<RailAction onClick={() => setTrucksOpen(true)}>
+									<Truck />
 									{order.trucks.length === 0 ? "Add trucks" : "Edit trucks"}
 								</RailAction>
 							)}
@@ -417,24 +428,33 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 								<>
 									<div className="my-2 h-px bg-foreground/10" />
 									<RailAction destructive onClick={() => setCancelOpen(true)}>
+										<XCircle />
 										Cancel order
 									</RailAction>
 								</>
 							)}
-							<RailAction onClick={reorder}>Reorder</RailAction>
+							<RailAction onClick={reorder}>
+								<RotateCcw />
+								Reorder
+							</RailAction>
 							{!cancelled && (
 								<Link
 									to="/t/$ref"
 									params={{ ref: order.id }}
 									className={railActionClass()}
 								>
+									<MapPin />
 									Track live
 								</Link>
 							)}
 							<RailAction onClick={() => void copyRef()}>
+								<Copy />
 								Copy reference
 							</RailAction>
-							<RailAction href={WHATSAPP_URL}>Contact support</RailAction>
+							<RailAction href={WHATSAPP_URL}>
+								<MessageCircle />
+								Contact support
+							</RailAction>
 						</div>
 					</DetailRailCard>
 

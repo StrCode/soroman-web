@@ -1,5 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+	Copy,
+	FileText,
+	MessageCircle,
+	Wallet,
+	XCircle,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import StatusTimeline from "@/components/dangote-delivery/status-timeline";
@@ -403,6 +410,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 										disabled={pay.isPending}
 										onClick={() => pay.mutate()}
 									>
+										<Wallet data-icon="inline-start" />
 										{pay.isPending
 											? "Paying…"
 											: `Pay ${formatNaira(total)} from wallet`}
@@ -428,19 +436,25 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 										<div className="my-2 h-px bg-foreground/10" />
 									)}
 									<RailAction destructive onClick={() => setCancelOpen(true)}>
+										<XCircle />
 										Cancel order
 									</RailAction>
 								</>
 							)}
 							<RailAction onClick={() => void copyRef()}>
+								<Copy />
 								Copy reference
 							</RailAction>
 							{request.licenseId && (
 								<Link to="/dashboard/licenses" className={railActionClass()}>
+									<FileText />
 									View licenses
 								</Link>
 							)}
-							<RailAction href={WHATSAPP_URL}>Contact support</RailAction>
+							<RailAction href={WHATSAPP_URL}>
+								<MessageCircle />
+								Contact support
+							</RailAction>
 						</div>
 					</DetailRailCard>
 
