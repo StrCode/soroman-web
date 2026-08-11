@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Bell, CheckCheck, LoaderCircle, Settings } from "lucide-react";
 import { toast } from "sonner";
-import { NotificationItem } from "@/components/notifications/notification-item";
+import { NotificationItem } from "@/components/notifications/item";
 import { Button } from "@/components/ui/button";
 import {
 	Empty,
@@ -14,7 +14,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { notificationsApi } from "@/lib/notifications/api";
 import { applyMarkAllRead, applyMarkOneRead } from "@/lib/notifications/cache";
-import { hrefToPath, resolveNotificationHref } from "@/lib/notifications/href";
+import {
+	hrefToPath,
+	resolveNotificationHref,
+} from "@/lib/notifications/deep-link";
 import { notificationKeys } from "@/lib/notifications/keys";
 import type {
 	Notification,

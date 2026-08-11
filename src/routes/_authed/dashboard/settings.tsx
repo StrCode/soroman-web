@@ -7,7 +7,7 @@ import { type ReactNode, useEffect } from "react";
 // } from "@/components/account/devices-panel";
 import { SecurityPanel } from "@/components/account/security-panel";
 import { MICRO } from "@/components/dashboard/panel";
-import { NotificationSettingsPanel } from "@/components/notifications/notification-settings-panel";
+import { NotificationSettingsPanel } from "@/components/notifications/settings-panel";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 

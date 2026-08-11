@@ -27,7 +27,7 @@ type Options = {
  * any error and open a fresh ticket — never let the browser auto-retry the
  * spent URL. Falls back to polling when disconnected (see NotificationBell).
  */
-export function useNotificationStream(options: Options = {}) {
+export function useStream(options: Options = {}) {
 	const { enabled = true, onNotification } = options;
 	const queryClient = useQueryClient();
 	const [connected, setConnected] = useState(false);

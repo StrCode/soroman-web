@@ -3,7 +3,7 @@ import { useRouter } from "@tanstack/react-router";
 import { Bell } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { NotificationPanel } from "@/components/notifications/notification-panel";
+import { NotificationPanel } from "@/components/notifications/panel";
 import { Button } from "@/components/ui/button";
 import {
 	Popover,
@@ -20,9 +20,12 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/lib/auth";
 import { notificationsApi } from "@/lib/notifications/api";
-import { hrefToPath, resolveNotificationHref } from "@/lib/notifications/href";
+import {
+	hrefToPath,
+	resolveNotificationHref,
+} from "@/lib/notifications/deep-link";
 import { notificationKeys } from "@/lib/notifications/keys";
-import { useNotificationStream } from "@/lib/notifications/use-notification-stream";
+import { useStream } from "@/lib/notifications/use-stream";
 
 export function NotificationBell() {
 	const isMobile = useIsMobile();
@@ -32,7 +35,7 @@ export function NotificationBell() {
 	const openRef = useRef(open);
 	openRef.current = open;
 
-	const { connected } = useNotificationStream({
+	const { connected } = useStream({
 		enabled: auth.status === "authed",
 		onNotification: (notification) => {
 			// Panel already shows the row via cache — skip the toast while open.

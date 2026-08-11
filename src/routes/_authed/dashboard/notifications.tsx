@@ -4,7 +4,7 @@ import { Bell, CheckCheck, LoaderCircle, Settings } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MICRO, PANEL } from "@/components/dashboard/panel";
-import { NotificationItem } from "@/components/notifications/notification-item";
+import { NotificationItem } from "@/components/notifications/item";
 import { Button } from "@/components/ui/button";
 import {
 	Empty,
@@ -22,7 +22,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { notificationsApi } from "@/lib/notifications/api";
 import { applyMarkAllRead, applyMarkOneRead } from "@/lib/notifications/cache";
 import { categoryLabel } from "@/lib/notifications/categories";
-import { hrefToPath, resolveNotificationHref } from "@/lib/notifications/href";
+import {
+	hrefToPath,
+	resolveNotificationHref,
+} from "@/lib/notifications/deep-link";
 import { notificationKeys } from "@/lib/notifications/keys";
 import type {
 	Notification,

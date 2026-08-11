@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
-import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationBell } from "@/components/notifications/bell";
 import {
 	SidebarInset,
 	SidebarProvider,
