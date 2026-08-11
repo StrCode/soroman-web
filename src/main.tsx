@@ -3,6 +3,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
 
 import Loader from "./components/loader";
+import { NotFoundContent } from "./components/not-found";
 import { ApiError } from "./lib/api";
 import { authStore } from "./lib/auth";
 import { routeTree } from "./routeTree.gen";
@@ -31,6 +32,9 @@ const router = createRouter({
 	defaultPreloadStaleTime: 0,
 	scrollRestoration: true,
 	defaultPendingComponent: () => <Loader />,
+	// Content-only — parent layouts keep their own chrome. Full marketing
+	// frame for truly unknown URLs lives on the root notFoundComponent.
+	defaultNotFoundComponent: NotFoundContent,
 	context: { queryClient },
 });
 

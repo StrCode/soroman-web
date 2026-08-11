@@ -6,6 +6,7 @@ import {
 	Outlet,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import { NotFoundPage } from "@/components/not-found";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -18,8 +19,12 @@ export interface RouterAppContext {
 // Page chrome lives in the pathless layouts, each surface owning its frame:
 // _site (full header + footer), _slim (checkout + auth), and the dashboard's
 // own sidebar shell under _authed/dashboard. The root is providers only.
+//
+// Unknown paths (and any `notFound()` that bubbles here) render the marketing
+// 404 — see https://tanstack.com/router/v1/docs/guide/not-found-errors
 export const Route = createRootRouteWithContext<RouterAppContext>()({
 	component: RootComponent,
+	notFoundComponent: NotFoundPage,
 	head: () => ({
 		meta: [
 			{
