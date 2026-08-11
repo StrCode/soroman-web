@@ -33,15 +33,35 @@ export type CreateDangoteOrderInput = {
  * `companyName` and the request's own under `licenseCompanyName` (a join
  * artifact of the staff desk query). The portal cares about the request's
  * own name, so it lands on `companyName` here.
+ *
+ * Staff approval now stores a real bank account on the request. The API
+ * returns both virtualAccount* and bankName/accountName/accountNumber —
+ * we collapse them so the UI always reads one place.
  */
 type WireRequest = Omit<DangoteOrderRequest, "companyName"> & {
 	companyName?: string | null;
 	licenseCompanyName?: string | null;
+	bankName?: string | null;
+	accountName?: string | null;
+	accountNumber?: string | null;
 };
 
 function toRequest(wire: WireRequest): DangoteOrderRequest {
-	const { licenseCompanyName, companyName, ...rest } = wire;
-	return { ...rest, companyName: licenseCompanyName ?? companyName ?? "" };
+	const {
+		licenseCompanyName,
+		companyName,
+		bankName,
+		accountName,
+		accountNumber,
+		...rest
+	} = wire;
+	return {
+		...rest,
+		companyName: licenseCompanyName ?? companyName ?? "",
+		virtualAccountBank: rest.virtualAccountBank || bankName || "",
+		virtualAccountName: rest.virtualAccountName || accountName || "",
+		virtualAccountNumber: rest.virtualAccountNumber || accountNumber || "",
+	};
 }
 
 /** Public: active Dangote products for the wizard's picker. */
@@ -105,20 +125,6 @@ export async function getMyDangoteOrder(
 		`${ORDERS}/${id}`,
 	);
 	return toRequest(found);
-}
-
-/** Settle an approved unpaid quote from wallet balance. */
-export async function payMyDangoteOrder(
-	id: number,
-): Promise<DangoteOrderRequest> {
-	const { request: paid } = await request<{ request: WireRequest }>(
-		`${ORDERS}/${id}/pay`,
-		{
-			method: "POST",
-			csrf: true,
-		},
-	);
-	return toRequest(paid);
 }
 
 /**

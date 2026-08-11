@@ -1,12 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-	Copy,
-	FileText,
-	MessageCircle,
-	Wallet,
-	XCircle,
-} from "lucide-react";
+import { Copy, FileText, MessageCircle, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import StatusTimeline from "@/components/dangote-delivery/status-timeline";
@@ -30,12 +24,10 @@ import {
 } from "@/components/ui/dialog";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
 import { usePageVisible } from "@/hooks/use-page-visible";
-import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import {
 	cancelMyDangoteOrder,
 	getMyDangoteOrder,
-	payMyDangoteOrder,
 } from "@/lib/dangote-delivery/api";
 import {
 	type DangoteOrderRequest,
@@ -135,26 +127,6 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 	const total =
 		request.totalAmount != null ? Number(request.totalAmount) : null;
 
-	const { data: walletBalance } = useQuery({
-		queryKey: ["wallet-balance"],
-		queryFn: () => api.dashboard.overview().then((d) => d.wallet.balance),
-		enabled: quoteReady,
-	});
-
-	const canPayFromWallet =
-		quoteReady &&
-		total != null &&
-		total > 0 &&
-		walletBalance != null &&
-		walletBalance >= total;
-	const shortfall =
-		quoteReady &&
-		total != null &&
-		walletBalance != null &&
-		walletBalance < total
-			? total - walletBalance
-			: null;
-
 	const account = request.virtualAccountNumber
 		? {
 				bank: request.virtualAccountBank || "",
@@ -163,24 +135,6 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 			}
 		: null;
 
-	const invalidateLists = () => {
-		void queryClient.invalidateQueries({
-			queryKey: ["dangote-delivery-orders"],
-		});
-		void queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
-	};
-
-	const pay = useMutation({
-		mutationFn: () => payMyDangoteOrder(request.id),
-		onSuccess: (updated) => {
-			queryClient.setQueryData(
-				["dangote-delivery-order", String(request.id)],
-				updated,
-			);
-			invalidateLists();
-		},
-	});
-
 	const cancel = useMutation({
 		mutationFn: () => cancelMyDangoteOrder(request.id),
 		onSuccess: (updated) => {
@@ -188,7 +142,9 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 				["dangote-delivery-order", String(request.id)],
 				updated,
 			);
-			invalidateLists();
+			void queryClient.invalidateQueries({
+				queryKey: ["dangote-delivery-orders"],
+			});
 			setCancelOpen(false);
 		},
 	});
@@ -261,7 +217,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 							</p>
 							<p className="mt-2 max-w-xl text-sm text-muted-foreground">
 								Nothing to pay yet. When your order is priced, this page will
-								show transfer details and wallet pay. Typical turnaround is 1–2
+								show the bank account to transfer to. Typical turnaround is 1–2
 								business days.
 							</p>
 						</section>
@@ -271,7 +227,7 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 						<section className="overflow-hidden rounded-xl border border-accent/35 bg-card">
 							<div className="flex flex-wrap items-center justify-between gap-3 border-b border-accent/20 bg-accent/8 px-5 py-3.5">
 								<span className={cn(MICRO, "text-accent")}>
-									Next — pay to confirm
+									Next — transfer to confirm
 								</span>
 								<span className="text-sm font-semibold tabular-nums">
 									{formatNaira(total)}
@@ -307,24 +263,11 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 									)}
 								</dl>
 
-								{walletBalance != null && !canPayFromWallet && (
-									<div className="rounded-lg border border-amber-500/35 bg-amber-500/8 px-4 py-3">
-										<p className="text-xs font-medium text-amber-900">
-											Wallet balance {formatNaira(walletBalance)} — short by{" "}
-											{formatNaira(shortfall ?? 0)}.
-										</p>
-										<p className="mt-1 text-xs text-amber-900/75">
-											Transfer the full {formatNaira(total)} below, or top up
-											first.
-										</p>
-									</div>
-								)}
-
 								{account ? (
 									<div>
 										<div className="flex items-center justify-between gap-3">
 											<p className={cn(MICRO, "text-muted-foreground")}>
-												Transfer to your Soroman account
+												Transfer to this account
 											</p>
 											<CopyAllButton account={account} />
 										</div>
@@ -333,7 +276,8 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 											className="mt-3 border-foreground/15"
 										/>
 										<p className="mt-3 text-xs text-muted-foreground">
-											Transfer the exact total — payment confirms automatically.
+											Transfer the exact total. Once received, Soroman will
+											confirm payment on this order.
 										</p>
 									</div>
 								) : (
@@ -427,36 +371,15 @@ function RequestDetail({ request }: { request: DangoteOrderRequest }) {
 				<DetailRail>
 					<DetailRailCard title="Actions">
 						<div className="space-y-1">
-							{canPayFromWallet && total != null && (
-								<>
-									<Button
-										className="mb-1 w-full cursor-pointer"
-										disabled={pay.isPending}
-										onClick={() => pay.mutate()}
-									>
-										<Wallet data-icon="inline-start" />
-										{pay.isPending
-											? "Paying…"
-											: `Pay ${formatNaira(total)} from wallet`}
-									</Button>
-									{pay.isError && (
-										<p className="mb-2 px-1 text-xs text-destructive">
-											{pay.error instanceof ApiError
-												? pay.error.message
-												: "Could not pay from wallet."}
-										</p>
-									)}
-								</>
-							)}
-							{quoteReady && !canPayFromWallet && walletBalance != null && (
+							{quoteReady && (
 								<p className="mb-2 px-1 text-xs text-muted-foreground">
-									Wallet {formatNaira(walletBalance)} — use the transfer account
-									on the left.
+									Transfer the amount on the left. Staff will mark this paid
+									once the transfer is received.
 								</p>
 							)}
 							{canCancel && (
 								<>
-									{(canPayFromWallet || quoteReady) && (
+									{quoteReady && (
 										<div className="my-2 h-px bg-foreground/10" />
 									)}
 									<RailAction destructive onClick={() => setCancelOpen(true)}>

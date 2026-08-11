@@ -22,11 +22,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
-import { api, type VirtualAccount } from "@/lib/api";
+import { type VirtualAccount } from "@/lib/api";
 import {
 	cancelMyDangoteOrder,
 	getMyDangoteOrder,
-	payMyDangoteOrder,
 } from "@/lib/dangote-delivery/api";
 import {
 	type DangoteOrderRequestSummary,
@@ -51,8 +50,8 @@ type QuoteDialogProps = {
 };
 
 /**
- * Quote / pay modal: transfer account always shown, wallet pay when covered,
- * or a clear shortfall when the balance isn't enough.
+ * Quote / pay modal: show the staff-entered bank account for transfer.
+ * Payment is confirmed manually by staff after the transfer clears.
  */
 export function DangoteQuoteDialog({
 	request,
@@ -60,24 +59,16 @@ export function DangoteQuoteDialog({
 	onOpenChange,
 }: QuoteDialogProps) {
 	const navigate = useNavigate();
-	const queryClient = useQueryClient();
 	const total =
 		request.totalAmount != null ? Number(request.totalAmount) : null;
 
-	const { data: walletBalance, isLoading: walletLoading } = useQuery({
-		queryKey: ["wallet-balance"],
-		queryFn: () => api.dashboard.overview().then((d) => d.wallet.balance),
-		enabled: open,
-	});
-
-	const needsAccount = !request.virtualAccountNumber;
 	const { data: detail, isLoading: detailLoading } = useQuery({
 		queryKey: ["dangote-delivery-order", String(request.id)],
 		queryFn: () => getMyDangoteOrder(request.id),
-		enabled: open && needsAccount,
+		enabled: open,
 	});
 
-	const account: VirtualAccount | null = (() => {
+	const displayAccount: VirtualAccount | null = (() => {
 		const number =
 			request.virtualAccountNumber || detail?.virtualAccountNumber || "";
 		if (!number) return null;
@@ -88,30 +79,6 @@ export function DangoteQuoteDialog({
 		};
 	})();
 
-	const canPayFromWallet =
-		total != null &&
-		total > 0 &&
-		walletBalance != null &&
-		walletBalance >= total;
-	const shortfall =
-		total != null && walletBalance != null && walletBalance < total
-			? total - walletBalance
-			: null;
-
-	const pay = useMutation({
-		mutationFn: () => payMyDangoteOrder(request.id),
-		onSuccess: () => {
-			void queryClient.invalidateQueries({
-				queryKey: ["dangote-delivery-orders"],
-			});
-			void queryClient.invalidateQueries({
-				queryKey: ["dangote-delivery-order", String(request.id)],
-			});
-			void queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
-			onOpenChange(false);
-		},
-	});
-
 	const openDetail = () => {
 		onOpenChange(false);
 		void navigate({
@@ -121,14 +88,7 @@ export function DangoteQuoteDialog({
 	};
 
 	return (
-		<Dialog
-			open={open}
-			onOpenChange={(next) => {
-				if (pay.isPending) return;
-				onOpenChange(next);
-				if (!next) pay.reset();
-			}}
-		>
+		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className="sm:max-w-md">
 				<DialogHeader>
 					<DialogTitle>{request.requestNumber}</DialogTitle>
@@ -159,19 +119,23 @@ export function DangoteQuoteDialog({
 						</dl>
 					)}
 
-					{detailLoading && needsAccount ? (
+					{detailLoading && !displayAccount ? (
 						<Skeleton className="h-28 rounded-lg" />
-					) : account ? (
+					) : displayAccount ? (
 						<div>
 							<p className="mb-2 text-[0.65rem] tracking-[0.2em] text-muted-foreground uppercase">
-								Transfer to your Soroman account
+								Transfer to this account
 							</p>
-							<AccountRows account={account} className="border-foreground/15" />
+							<AccountRows
+								account={displayAccount}
+								className="border-foreground/15"
+							/>
 							<div className="mt-2 flex justify-end">
-								<CopyAllButton account={account} />
+								<CopyAllButton account={displayAccount} />
 							</div>
 							<p className="mt-2 text-xs text-muted-foreground">
-								Transfer the exact total — payment confirms automatically.
+								Transfer the exact total. Once received, Soroman will confirm
+								payment on this order.
 							</p>
 						</div>
 					) : (
@@ -180,52 +144,12 @@ export function DangoteQuoteDialog({
 							try again in a moment.
 						</p>
 					)}
-
-					{walletLoading ? (
-						<Skeleton className="h-16 rounded-lg" />
-					) : canPayFromWallet && total != null ? (
-						<div className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-3">
-							<p className="text-xs text-muted-foreground">
-								Wallet balance {formatNaira(walletBalance ?? 0)} — covers this
-								order.
-							</p>
-							<Button
-								className="mt-3 w-full cursor-pointer"
-								disabled={pay.isPending}
-								onClick={() => pay.mutate()}
-							>
-								{pay.isPending
-									? "Paying…"
-									: `Pay ${formatNaira(total)} from wallet`}
-							</Button>
-						</div>
-					) : walletBalance != null && total != null ? (
-						<div className="rounded-lg border border-amber-500/35 bg-amber-500/8 px-4 py-3">
-							<p className="text-xs font-medium text-amber-900">
-								Wallet balance {formatNaira(walletBalance)} — short by{" "}
-								{formatNaira(shortfall ?? 0)}.
-							</p>
-							<p className="mt-1 text-xs text-amber-900/75">
-								Transfer the full {formatNaira(total)} to the account above, or
-								top up your wallet first.
-							</p>
-						</div>
-					) : null}
-
-					{pay.isError && (
-						<p className="text-xs text-destructive">
-							{pay.error instanceof ApiError
-								? pay.error.message
-								: "Could not pay from wallet."}
-						</p>
-					)}
 				</div>
 
 				<DialogFooter>
 					<Button
 						variant="outline"
 						className="cursor-pointer"
-						disabled={pay.isPending}
 						onClick={() => onOpenChange(false)}
 					>
 						Close
@@ -297,7 +221,7 @@ export function DangoteOrderActions({
 						<DropdownMenuItem onClick={openDetail}>Open</DropdownMenuItem>
 						{quoteReady && (
 							<DropdownMenuItem onClick={() => setQuoteOpen(true)}>
-								View order
+								View payment details
 							</DropdownMenuItem>
 						)}
 						{cancellable && (

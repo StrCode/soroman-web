@@ -178,7 +178,7 @@ function WalletPage() {
 						</p>
 					)}
 					<p className="mt-2 text-xs text-muted-foreground">
-						Pays depot, Dangote, and cooking-gas orders instantly when it covers
+						Pays depot and cooking-gas orders instantly when it covers
 						the total.
 					</p>
 				</section>

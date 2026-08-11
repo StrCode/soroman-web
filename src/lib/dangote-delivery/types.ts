@@ -71,6 +71,11 @@ export type DangoteOrderRequestSummary = {
 	pricePerUnit: string | null;
 	totalAmount: string | null;
 	expectedArrivalDate: string | null;
+	/**
+	 * Staff-entered bank details shown at approval. Still named
+	 * virtualAccount* on the wire for history; also aliased as
+	 * bankName / accountName / accountNumber.
+	 */
 	virtualAccountNumber: string;
 	virtualAccountBank: string;
 	createdAt: string;
