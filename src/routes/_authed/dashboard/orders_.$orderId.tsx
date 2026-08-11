@@ -36,6 +36,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	api,
 	describePriceWindow,
@@ -44,6 +45,7 @@ import {
 } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import { ApiError } from "@/lib/http";
+import { depotOrderLiveMs, visibleRefetch } from "@/lib/live-refetch";
 import { seedDraftFromOrder } from "@/lib/order-draft";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -98,6 +100,7 @@ const formatDate = (iso?: string) =>
  */
 function OrderDetailPage() {
 	const { orderId } = Route.useParams();
+	const pageVisible = usePageVisible();
 
 	const {
 		data: order,
@@ -106,13 +109,13 @@ function OrderDetailPage() {
 	} = useQuery({
 		queryKey: ["order", orderId],
 		queryFn: () => api.orders.get(orderId),
+		// Live only while payment/fulfilment can change, and only while this tab
+		// is focused — parked detail tabs were hammering by-ref every 10s.
 		refetchInterval: (query) => {
 			const data = query.state.data as OrderDetail | null | undefined;
-			if (!data) return false;
-			return data.status === "loaded" || data.status === "cancelled"
-				? false
-				: 10_000;
+			return visibleRefetch(pageVisible, depotOrderLiveMs(data?.status));
 		},
+		refetchIntervalInBackground: false,
 		retry: false,
 	});
 
@@ -169,8 +172,7 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 			? order.total - walletBalance
 			: null;
 
-	const invalidate = () => {
-		void queryClient.invalidateQueries({ queryKey: ["order", order.id] });
+	const invalidateLists = () => {
 		void queryClient.invalidateQueries({ queryKey: ["orders"] });
 		void queryClient.invalidateQueries({ queryKey: ["wallet-balance"] });
 		void queryClient.invalidateQueries({ queryKey: ["dashboard"] });
@@ -178,13 +180,18 @@ function OrderDetailView({ order }: { order: OrderDetail }) {
 
 	const payFromWallet = useMutation({
 		mutationFn: () => api.orders.payByRef(order.id),
-		onSuccess: invalidate,
+		onSuccess: (updated) => {
+			// Seed cache so polling stops/slows immediately from the new status.
+			queryClient.setQueryData(["order", order.id], updated);
+			invalidateLists();
+		},
 	});
 
 	const cancel = useMutation({
 		mutationFn: () => api.orders.cancelByRef(order.id),
-		onSuccess: () => {
-			invalidate();
+		onSuccess: (updated) => {
+			queryClient.setQueryData(["order", order.id], updated);
+			invalidateLists();
 			setCancelOpen(false);
 		},
 	});

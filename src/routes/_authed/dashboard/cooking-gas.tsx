@@ -5,11 +5,17 @@ import { useMemo, useState } from "react";
 import { MICRO } from "@/components/dashboard/panel";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	type LpgOrderRequest,
 	type LpgOrdersListParams,
 	listMyLpgOrders,
 } from "@/lib/cooking-gas/api";
+import {
+	LIVE_FULFILMENT_MS,
+	LIVE_PAYMENT_MS,
+	visibleRefetch,
+} from "@/lib/live-refetch";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -181,8 +187,11 @@ const columns: AppColumnDef<LpgOrderRequest>[] = [
  */
 function CookingGasOrdersPage() {
 	const navigate = useNavigate();
+	const pageVisible = usePageVisible();
 	const [filter, setFilter] = useState<FilterKey>("all");
 	const [page, setPage] = useState(1);
+	const livePoll = visibleRefetch(pageVisible, LIVE_FULFILMENT_MS);
+	const unpaidPoll = visibleRefetch(pageVisible, LIVE_PAYMENT_MS);
 
 	const active = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
 	const listParams: LpgOrdersListParams = {
@@ -194,7 +203,19 @@ function CookingGasOrdersPage() {
 	const { data, isLoading } = useQuery({
 		queryKey: ["cooking-gas-orders", listParams],
 		queryFn: () => listMyLpgOrders(listParams),
-		refetchInterval: 10_000,
+		refetchInterval: (query) => {
+			const rows = query.state.data?.requests;
+			const live = rows?.some(
+				(r) =>
+					r.status === "Pending Review" ||
+					(r.status === "Approved" && r.paymentStatus === "Unpaid"),
+			);
+			return visibleRefetch(
+				pageVisible,
+				live ? LIVE_FULFILMENT_MS : false,
+			);
+		},
+		refetchIntervalInBackground: false,
 	});
 
 	const countQueries = useQueries({
@@ -203,7 +224,8 @@ function CookingGasOrdersPage() {
 				queryKey: ["cooking-gas-orders", "count", "review"],
 				queryFn: () =>
 					listMyLpgOrders({ page: 1, limit: 1, status: "Pending Review" }),
-				refetchInterval: 10_000,
+				refetchInterval: livePoll,
+				refetchIntervalInBackground: false,
 			},
 			{
 				queryKey: ["cooking-gas-orders", "count", "ready"],
@@ -214,13 +236,14 @@ function CookingGasOrdersPage() {
 						status: "Approved",
 						paymentStatus: "Unpaid",
 					}),
-				refetchInterval: 10_000,
+				refetchInterval: unpaidPoll,
+				refetchIntervalInBackground: false,
 			},
 			{
 				queryKey: ["cooking-gas-orders", "count", "rejected"],
 				queryFn: () =>
 					listMyLpgOrders({ page: 1, limit: 1, status: "Rejected" }),
-				refetchInterval: 10_000,
+				staleTime: 30_000,
 			},
 		],
 	});
@@ -243,7 +266,8 @@ function CookingGasOrdersPage() {
 				status: "Approved",
 				paymentStatus: "Unpaid",
 			}),
-		refetchInterval: 10_000,
+		refetchInterval: unpaidPoll,
+		refetchIntervalInBackground: false,
 	});
 
 	const attention = attentionData?.requests ?? [];

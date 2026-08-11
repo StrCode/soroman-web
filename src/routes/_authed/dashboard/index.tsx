@@ -10,6 +10,7 @@ import WalletCard from "@/components/dashboard/wallet-card";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	api,
 	type DashboardOverview,
@@ -24,6 +25,7 @@ import {
 	formatDangoteQuantity,
 	STATUS_LABELS,
 } from "@/lib/dangote-delivery/types";
+import { LIVE_PAYMENT_MS, visibleRefetch } from "@/lib/live-refetch";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira, useCatalog } from "@/lib/use-catalog";
 import { useSettings } from "@/lib/use-settings";
@@ -127,6 +129,8 @@ function OverviewPage() {
 	const auth = useAuth();
 	const customer = auth.status === "authed" ? auth.customer : null;
 	const profileReady = Boolean(customer?.name || customer?.company_name);
+	const pageVisible = usePageVisible();
+	const unpaidPoll = visibleRefetch(pageVisible, LIVE_PAYMENT_MS);
 
 	const { data: overview, isLoading } = useQuery({
 		queryKey: ["dashboard"],
@@ -135,10 +139,15 @@ function OverviewPage() {
 		// "awaiting payment" to "in motion" the moment the transfer confirms.
 		refetchInterval: (query) => {
 			const data = query.state.data as DashboardOverview | undefined;
-			return data?.active.some((o) => o.status === "awaiting_payment")
-				? 10_000
-				: false;
+			const hasUnpaid = data?.active.some(
+				(o) => o.status === "awaiting_payment",
+			);
+			return visibleRefetch(
+				pageVisible,
+				hasUnpaid ? LIVE_PAYMENT_MS : false,
+			);
 		},
+		refetchIntervalInBackground: false,
 	});
 
 	const { data: dangoteOrdersResult } = useQuery({
@@ -150,7 +159,8 @@ function OverviewPage() {
 				status: "Approved",
 				paymentStatus: "Unpaid",
 			}),
-		refetchInterval: 10000,
+		refetchInterval: unpaidPoll,
+		refetchIntervalInBackground: false,
 	});
 	const dangoteOrders = dangoteOrdersResult?.requests;
 
@@ -163,7 +173,8 @@ function OverviewPage() {
 				status: "Approved",
 				paymentStatus: "Unpaid",
 			}),
-		refetchInterval: 10000,
+		refetchInterval: unpaidPoll,
+		refetchIntervalInBackground: false,
 	});
 	const cookingGasOrders = cookingGasOrdersResult?.requests;
 

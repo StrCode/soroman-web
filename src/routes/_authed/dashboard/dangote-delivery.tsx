@@ -8,6 +8,7 @@ import {
 	DangoteQuoteDialog,
 } from "@/components/orders/dangote-order-actions";
 import { Button } from "@/components/ui/button";
+import { usePageVisible } from "@/hooks/use-page-visible";
 import {
 	type DangoteOrdersListParams,
 	listMyDangoteOrders,
@@ -18,6 +19,11 @@ import {
 	formatDangoteQuantity,
 	STATUS_LABELS,
 } from "@/lib/dangote-delivery/types";
+import {
+	LIVE_FULFILMENT_MS,
+	LIVE_PAYMENT_MS,
+	visibleRefetch,
+} from "@/lib/live-refetch";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -181,10 +187,13 @@ const columns: AppColumnDef<DangoteOrderRequestSummary>[] = [
  */
 function DangoteDeliveryOrdersPage() {
 	const navigate = useNavigate();
+	const pageVisible = usePageVisible();
 	const [filter, setFilter] = useState<FilterKey>("all");
 	const [page, setPage] = useState(1);
 	const [payRequest, setPayRequest] =
 		useState<DangoteOrderRequestSummary | null>(null);
+	const livePoll = visibleRefetch(pageVisible, LIVE_FULFILMENT_MS);
+	const unpaidPoll = visibleRefetch(pageVisible, LIVE_PAYMENT_MS);
 
 	const active = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
 	const listParams: DangoteOrdersListParams = {
@@ -196,7 +205,21 @@ function DangoteDeliveryOrdersPage() {
 	const { data, isLoading } = useQuery({
 		queryKey: ["dangote-delivery-orders", listParams],
 		queryFn: () => listMyDangoteOrders(listParams),
-		refetchInterval: 10_000,
+		refetchInterval: (query) => {
+			const rows = query.state.data?.requests;
+			const live = rows?.some(
+				(r) =>
+					r.status === "Pending Review" ||
+					(r.status === "Approved" && r.paymentStatus === "Unpaid") ||
+					(r.paymentStatus === "Paid" &&
+						r.collectionStatus !== "Collected"),
+			);
+			return visibleRefetch(
+				pageVisible,
+				live ? LIVE_FULFILMENT_MS : false,
+			);
+		},
+		refetchIntervalInBackground: false,
 	});
 
 	const countQueries = useQueries({
@@ -205,7 +228,8 @@ function DangoteDeliveryOrdersPage() {
 				queryKey: ["dangote-delivery-orders", "count", "review"],
 				queryFn: () =>
 					listMyDangoteOrders({ page: 1, limit: 1, status: "Pending Review" }),
-				refetchInterval: 10_000,
+				refetchInterval: livePoll,
+				refetchIntervalInBackground: false,
 			},
 			{
 				queryKey: ["dangote-delivery-orders", "count", "ready"],
@@ -216,13 +240,14 @@ function DangoteDeliveryOrdersPage() {
 						status: "Approved",
 						paymentStatus: "Unpaid",
 					}),
-				refetchInterval: 10_000,
+				refetchInterval: unpaidPoll,
+				refetchIntervalInBackground: false,
 			},
 			{
 				queryKey: ["dangote-delivery-orders", "count", "rejected"],
 				queryFn: () =>
 					listMyDangoteOrders({ page: 1, limit: 1, status: "Rejected" }),
-				refetchInterval: 10_000,
+				staleTime: 30_000,
 			},
 		],
 	});
@@ -245,7 +270,8 @@ function DangoteDeliveryOrdersPage() {
 				status: "Approved",
 				paymentStatus: "Unpaid",
 			}),
-		refetchInterval: 10_000,
+		refetchInterval: unpaidPoll,
+		refetchIntervalInBackground: false,
 	});
 
 	const attention = attentionData?.requests ?? [];
