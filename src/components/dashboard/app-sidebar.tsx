@@ -1,5 +1,6 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
+	Bell,
 	ChevronsUpDown,
 	Factory,
 	FileCheck,
@@ -59,6 +60,7 @@ const MANAGE = [
 const ACCOUNT = [
 	{ label: "Commissions", to: "/dashboard/commissions", icon: HandCoins },
 	{ label: "Wallet", to: "/dashboard/wallet", icon: Wallet },
+	{ label: "Notifications", to: "/dashboard/notifications", icon: Bell },
 	{ label: "Profile", to: "/dashboard/profile", icon: UserRound },
 	{ label: "Settings", to: "/dashboard/settings", icon: Settings },
 ] as const;

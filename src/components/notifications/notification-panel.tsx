@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { Bell, CheckCheck, LoaderCircle, Settings } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/components/ui/empty";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { notificationsApi } from "@/lib/notifications/api";
 import { applyMarkAllRead, applyMarkOneRead } from "@/lib/notifications/cache";
 import { hrefToPath, resolveNotificationHref } from "@/lib/notifications/href";
@@ -26,28 +23,29 @@ import type {
 } from "@/lib/notifications/types";
 import { cn } from "@/lib/utils";
 
-type Filter = "all" | "unread";
+const PANEL_LIST_PARAMS = { unreadOnly: true, limit: 8 } as const;
 
 type Props = {
 	onClose: () => void;
 	className?: string;
+	/**
+	 * popover — grow with content, scroll after ~8 rows.
+	 * sheet — fill the mobile drawer height.
+	 */
+	layout?: "popover" | "sheet";
 };
 
-export function NotificationPanel({ onClose, className }: Props) {
-	const [filter, setFilter] = useState<Filter>("all");
+export function NotificationPanel({
+	onClose,
+	className,
+	layout = "popover",
+}: Props) {
 	const router = useRouter();
 	const queryClient = useQueryClient();
 
 	const listQuery = useQuery({
-		queryKey: notificationKeys.list({
-			unreadOnly: filter === "unread",
-			limit: 20,
-		}),
-		queryFn: () =>
-			notificationsApi.list({
-				unreadOnly: filter === "unread",
-				limit: 20,
-			}),
+		queryKey: notificationKeys.list(PANEL_LIST_PARAMS),
+		queryFn: () => notificationsApi.list(PANEL_LIST_PARAMS),
 	});
 
 	const unreadQuery = useQuery({
@@ -112,6 +110,7 @@ export function NotificationPanel({ onClose, className }: Props) {
 
 	const unreadCount = unreadQuery.data?.unreadCount ?? 0;
 	const items = listQuery.data?.notifications ?? [];
+	const totalUnread = listQuery.data?.pagination.total ?? unreadCount;
 
 	const onSelect = (notification: Notification) => {
 		const path = hrefToPath(resolveNotificationHref(notification));
@@ -124,18 +123,25 @@ export function NotificationPanel({ onClose, className }: Props) {
 		void router.history.push(path);
 	};
 
+	const goToInbox = () => {
+		onClose();
+		void router.history.push("/dashboard/notifications");
+	};
+
 	return (
-		<div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-			<div className="flex items-center justify-between gap-2 px-1 pb-2">
+		<div
+			className={cn(
+				"flex flex-col",
+				layout === "sheet" && "min-h-0 flex-1",
+				className,
+			)}
+		>
+			<div className="flex shrink-0 items-center justify-between gap-2 px-1 pb-2">
 				<div>
 					<p className="text-sm font-medium">Notifications</p>
-					{unreadCount > 0 ? (
-						<p className="text-xs text-muted-foreground">
-							{unreadCount} unread
-						</p>
-					) : (
-						<p className="text-xs text-muted-foreground">You're up to date</p>
-					)}
+					<p className="text-xs text-muted-foreground">
+						{unreadCount > 0 ? `${unreadCount} unread` : "You're up to date"}
+					</p>
 				</div>
 				<div className="flex items-center gap-0.5">
 					<Button
@@ -165,89 +171,78 @@ export function NotificationPanel({ onClose, className }: Props) {
 				</div>
 			</div>
 
-			<Tabs
-				value={filter}
-				onValueChange={(value) => {
-					if (value === "all" || value === "unread") setFilter(value);
-				}}
-				className="flex min-h-0 flex-1 flex-col gap-2"
+			<div
+				className={cn(
+					"min-h-0",
+					layout === "sheet"
+						? "flex-1 overflow-y-auto"
+						: "max-h-[20rem] overflow-y-auto",
+				)}
 			>
-				<TabsList variant="line" className="w-full justify-start px-1">
-					<TabsTrigger value="all">All</TabsTrigger>
-					<TabsTrigger value="unread">
-						Unread
-						{unreadCount > 0 ? (
-							<span className="ml-1 rounded-full bg-muted px-1.5 text-[0.65rem] text-muted-foreground tabular-nums">
-								{unreadCount > 99 ? "99+" : unreadCount}
-							</span>
-						) : null}
-					</TabsTrigger>
-				</TabsList>
-
-				<TabsContent
-					value={filter}
-					className="mt-0 flex min-h-0 flex-1 flex-col"
-				>
-					{listQuery.isLoading ? (
-						<div className="flex flex-col gap-2 px-1 py-2">
-							{Array.from({ length: 4 }, (_, i) => (
-								<div key={i} className="flex gap-3 px-2 py-2">
-									<Skeleton className="size-8 rounded-lg" />
-									<div className="flex flex-1 flex-col gap-2">
-										<Skeleton className="h-3.5 w-3/4" />
-										<Skeleton className="h-3 w-full" />
-										<Skeleton className="h-2.5 w-1/3" />
-									</div>
+				{listQuery.isLoading ? (
+					<div className="flex flex-col gap-1 px-1 py-1">
+						{Array.from({ length: 3 }, (_, i) => (
+							<div key={i} className="flex gap-2.5 px-2 py-2">
+								<Skeleton className="size-6 rounded-md" />
+								<div className="flex flex-1 flex-col gap-1.5">
+									<Skeleton className="h-3 w-3/4" />
+									<Skeleton className="h-2.5 w-full" />
 								</div>
-							))}
-						</div>
-					) : listQuery.isError ? (
-						<div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
-							<p className="text-sm text-muted-foreground">
-								Couldn't load notifications. Try again in a moment.
-							</p>
-							<Button
-								variant="outline"
-								size="sm"
-								onClick={() => void listQuery.refetch()}
-							>
-								Retry
-							</Button>
-						</div>
-					) : items.length === 0 ? (
-						<Empty className="border-0 py-10">
-							<EmptyHeader>
-								<EmptyMedia variant="icon">
-									<Bell />
-								</EmptyMedia>
-								<EmptyTitle>
-									{filter === "unread"
-										? "No unread notifications"
-										: "You're all caught up"}
-								</EmptyTitle>
-								<EmptyDescription>
-									{filter === "unread"
-										? "New order and payment updates will show up here."
-										: "Order updates, payments, and account alerts land here."}
-								</EmptyDescription>
-							</EmptyHeader>
-						</Empty>
-					) : (
-						<ScrollArea className="h-[min(24rem,55vh)]">
-							<ul className="flex flex-col gap-0.5 px-0.5 pb-1">
-								{items.map((notification) => (
-									<li key={notification.id}>
-										<NotificationItem
-											notification={notification}
-											onSelect={onSelect}
-										/>
-									</li>
-								))}
-							</ul>
-						</ScrollArea>
-					)}
-				</TabsContent>
-			</Tabs>
+							</div>
+						))}
+					</div>
+				) : listQuery.isError ? (
+					<div className="flex flex-col items-center gap-3 px-3 py-8 text-center">
+						<p className="text-sm text-muted-foreground">
+							Couldn't load notifications.
+						</p>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => void listQuery.refetch()}
+						>
+							Retry
+						</Button>
+					</div>
+				) : items.length === 0 ? (
+					<Empty className="border-0 py-8">
+						<EmptyHeader>
+							<EmptyMedia variant="icon">
+								<Bell />
+							</EmptyMedia>
+							<EmptyTitle>No unread notifications</EmptyTitle>
+							<EmptyDescription>
+								Order updates and payments will show up here.
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				) : (
+					<ul className="flex flex-col gap-0.5 px-0.5">
+						{items.map((notification) => (
+							<li key={notification.id}>
+								<NotificationItem
+									notification={notification}
+									onSelect={onSelect}
+									compact
+								/>
+							</li>
+						))}
+					</ul>
+				)}
+			</div>
+
+			<div className="shrink-0 border-t border-border pt-2">
+				<Button
+					variant="ghost"
+					size="sm"
+					className="w-full justify-center text-muted-foreground"
+					onClick={goToInbox}
+				>
+					{totalUnread > items.length
+						? `View all notifications (${totalUnread})`
+						: "View all notifications"}
+				</Button>
+			</div>
 		</div>
 	);
 }

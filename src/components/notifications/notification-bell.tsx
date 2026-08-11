@@ -94,7 +94,7 @@ export function NotificationBell() {
 						<SheetTitle>Notifications</SheetTitle>
 					</SheetHeader>
 					<div className="flex min-h-0 flex-1 flex-col p-4 pt-12">
-						<NotificationPanel onClose={() => setOpen(false)} />
+						<NotificationPanel layout="sheet" onClose={() => setOpen(false)} />
 					</div>
 				</SheetContent>
 			</Sheet>
@@ -119,9 +119,9 @@ export function NotificationBell() {
 			<PopoverContent
 				align="end"
 				sideOffset={8}
-				className="w-[22.5rem] gap-0 p-3"
+				className="w-[22.5rem] gap-0 overflow-hidden p-3"
 			>
-				<NotificationPanel onClose={() => setOpen(false)} />
+				<NotificationPanel layout="popover" onClose={() => setOpen(false)} />
 			</PopoverContent>
 		</Popover>
 	);

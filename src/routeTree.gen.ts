@@ -27,6 +27,7 @@ import { Route as AuthedDashboardCommissionsRouteImport } from './routes/_authed
 import { Route as AuthedDashboardCookingGasRouteImport } from './routes/_authed/dashboard/cooking-gas'
 import { Route as AuthedDashboardDangoteDeliveryRouteImport } from './routes/_authed/dashboard/dangote-delivery'
 import { Route as AuthedDashboardLicensesRouteImport } from './routes/_authed/dashboard/licenses'
+import { Route as AuthedDashboardNotificationsRouteImport } from './routes/_authed/dashboard/notifications'
 import { Route as AuthedDashboardOrdersRouteImport } from './routes/_authed/dashboard/orders'
 import { Route as AuthedDashboardPricesRouteImport } from './routes/_authed/dashboard/prices'
 import { Route as AuthedDashboardProfileRouteImport } from './routes/_authed/dashboard/profile'
@@ -131,6 +132,12 @@ const AuthedDashboardLicensesRoute = AuthedDashboardLicensesRouteImport.update({
   path: '/licenses',
   getParentRoute: () => AuthedDashboardRouteRoute,
 } as any)
+const AuthedDashboardNotificationsRoute =
+  AuthedDashboardNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthedDashboardRouteRoute,
+  } as any)
 const AuthedDashboardOrdersRoute = AuthedDashboardOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -216,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/cooking-gas': typeof AuthedDashboardCookingGasRoute
   '/dashboard/dangote-delivery': typeof AuthedDashboardDangoteDeliveryRoute
   '/dashboard/licenses': typeof AuthedDashboardLicensesRoute
+  '/dashboard/notifications': typeof AuthedDashboardNotificationsRoute
   '/dashboard/orders': typeof AuthedDashboardOrdersRoute
   '/dashboard/prices': typeof AuthedDashboardPricesRoute
   '/dashboard/profile': typeof AuthedDashboardProfileRoute
@@ -245,6 +253,7 @@ export interface FileRoutesByTo {
   '/dashboard/cooking-gas': typeof AuthedDashboardCookingGasRoute
   '/dashboard/dangote-delivery': typeof AuthedDashboardDangoteDeliveryRoute
   '/dashboard/licenses': typeof AuthedDashboardLicensesRoute
+  '/dashboard/notifications': typeof AuthedDashboardNotificationsRoute
   '/dashboard/orders': typeof AuthedDashboardOrdersRoute
   '/dashboard/prices': typeof AuthedDashboardPricesRoute
   '/dashboard/profile': typeof AuthedDashboardProfileRoute
@@ -279,6 +288,7 @@ export interface FileRoutesById {
   '/_authed/dashboard/cooking-gas': typeof AuthedDashboardCookingGasRoute
   '/_authed/dashboard/dangote-delivery': typeof AuthedDashboardDangoteDeliveryRoute
   '/_authed/dashboard/licenses': typeof AuthedDashboardLicensesRoute
+  '/_authed/dashboard/notifications': typeof AuthedDashboardNotificationsRoute
   '/_authed/dashboard/orders': typeof AuthedDashboardOrdersRoute
   '/_authed/dashboard/prices': typeof AuthedDashboardPricesRoute
   '/_authed/dashboard/profile': typeof AuthedDashboardProfileRoute
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/dashboard/cooking-gas'
     | '/dashboard/dangote-delivery'
     | '/dashboard/licenses'
+    | '/dashboard/notifications'
     | '/dashboard/orders'
     | '/dashboard/prices'
     | '/dashboard/profile'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/dashboard/cooking-gas'
     | '/dashboard/dangote-delivery'
     | '/dashboard/licenses'
+    | '/dashboard/notifications'
     | '/dashboard/orders'
     | '/dashboard/prices'
     | '/dashboard/profile'
@@ -373,6 +385,7 @@ export interface FileRouteTypes {
     | '/_authed/dashboard/cooking-gas'
     | '/_authed/dashboard/dangote-delivery'
     | '/_authed/dashboard/licenses'
+    | '/_authed/dashboard/notifications'
     | '/_authed/dashboard/orders'
     | '/_authed/dashboard/prices'
     | '/_authed/dashboard/profile'
@@ -523,6 +536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardLicensesRouteImport
       parentRoute: typeof AuthedDashboardRouteRoute
     }
+    '/_authed/dashboard/notifications': {
+      id: '/_authed/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof AuthedDashboardNotificationsRouteImport
+      parentRoute: typeof AuthedDashboardRouteRoute
+    }
     '/_authed/dashboard/orders': {
       id: '/_authed/dashboard/orders'
       path: '/orders'
@@ -622,6 +642,7 @@ interface AuthedDashboardRouteRouteChildren {
   AuthedDashboardCookingGasRoute: typeof AuthedDashboardCookingGasRoute
   AuthedDashboardDangoteDeliveryRoute: typeof AuthedDashboardDangoteDeliveryRoute
   AuthedDashboardLicensesRoute: typeof AuthedDashboardLicensesRoute
+  AuthedDashboardNotificationsRoute: typeof AuthedDashboardNotificationsRoute
   AuthedDashboardOrdersRoute: typeof AuthedDashboardOrdersRoute
   AuthedDashboardPricesRoute: typeof AuthedDashboardPricesRoute
   AuthedDashboardProfileRoute: typeof AuthedDashboardProfileRoute
@@ -638,6 +659,7 @@ const AuthedDashboardRouteRouteChildren: AuthedDashboardRouteRouteChildren = {
   AuthedDashboardCookingGasRoute: AuthedDashboardCookingGasRoute,
   AuthedDashboardDangoteDeliveryRoute: AuthedDashboardDangoteDeliveryRoute,
   AuthedDashboardLicensesRoute: AuthedDashboardLicensesRoute,
+  AuthedDashboardNotificationsRoute: AuthedDashboardNotificationsRoute,
   AuthedDashboardOrdersRoute: AuthedDashboardOrdersRoute,
   AuthedDashboardPricesRoute: AuthedDashboardPricesRoute,
   AuthedDashboardProfileRoute: AuthedDashboardProfileRoute,
