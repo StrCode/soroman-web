@@ -91,20 +91,26 @@ function InvoiceHero({
 	order: OrderRecord;
 	account: VirtualAccount | null;
 }) {
+	// Re-check the deadline periodically so the badge flips without a refresh.
 	const [now, setNow] = useState(() => Date.now());
 	useEffect(() => {
 		const t = setInterval(() => setNow(Date.now()), 30_000);
 		return () => clearInterval(t);
 	}, []);
 
-	const expiresAt = order.lock_expires_at
+	// Missing lock_expires_at is "unknown", not expired — the dashboard used to
+	// label that as "Price expired" while still showing the transfer account.
+	const expiresAtMs = order.lock_expires_at
 		? Date.parse(order.lock_expires_at)
-		: null;
-	const minutesLeft = expiresAt
-		? Math.max(0, Math.round((expiresAt - now) / 60_000))
-		: null;
-	const expired = minutesLeft === 0;
+		: Number.NaN;
+	const expired =
+		Number.isFinite(expiresAtMs) && expiresAtMs <= now;
 	const validUntil = formatPriceValidUntil(order.lock_expires_at);
+	const badge = expired
+		? "Price expired"
+		: validUntil
+			? `Price valid till ${validUntil}`
+			: "Awaiting payment";
 
 	return (
 		<section
@@ -113,9 +119,7 @@ function InvoiceHero({
 		>
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-600/25 px-6 py-4">
 				<span className="rounded-full border border-amber-600/40 px-2.5 py-0.5 text-[0.65rem] tracking-[0.14em] whitespace-nowrap text-amber-600 uppercase dark:text-amber-500">
-					{expired || !validUntil
-						? "Price expired"
-						: `Price valid till ${validUntil}`}
+					{badge}
 				</span>
 				<span className="text-xs text-muted-foreground tabular-nums">
 					Invoice {order.id}
