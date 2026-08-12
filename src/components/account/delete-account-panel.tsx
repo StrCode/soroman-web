@@ -175,10 +175,7 @@ export function DeleteAccountPanel() {
 						<div className="flex flex-col gap-3 px-5">
 							<OtpInput
 								value={code}
-								onChange={(next) => {
-									setCode(next);
-									if (next.length === OTP_LENGTH) void confirmDelete(next);
-								}}
+								onChange={setCode}
 								length={OTP_LENGTH}
 								disabled={busy}
 								label="Account deletion code"
