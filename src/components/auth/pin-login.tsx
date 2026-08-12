@@ -1,9 +1,10 @@
 import { useForm } from "@tanstack/react-form";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { AlertCircleIcon, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import type { z } from "zod";
 import { FieldError, showFieldError } from "@/components/field-error";
 import PhoneField from "@/components/phone-field";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ export default function PinLogin({
 }) {
 	const [mode, setMode] = useState<"phone" | "email">("phone");
 	const [error, setError] = useState<string | null>(null);
+	const pinRef = useRef<HTMLInputElement>(null);
 
 	const form = useForm({
 		defaultValues: { identifier: "", pin: "" },
@@ -47,12 +49,16 @@ export default function PinLogin({
 				authStore.signedIn(customer);
 				onSuccess(customer);
 			} catch (err) {
-				form.setFieldValue("pin", "");
+				// Wipe the PIN for a clean retry, but reset field meta too —
+				// otherwise a still-touched empty field also screams
+				// "exactly 6 digits" under the real auth failure.
+				form.resetField("pin");
 				setError(
 					err instanceof ApiError
 						? err.message
 						: "That didn't work — try a one-time code instead.",
 				);
+				queueMicrotask(() => pinRef.current?.focus());
 			}
 		},
 	});
@@ -157,37 +163,43 @@ export default function PinLogin({
 					onSubmit: ({ value }) => zodFieldError(pinSchema, value),
 				}}
 			>
-				{(field) => (
-					<div className="grid gap-1.5">
-						<Label htmlFor="pin">PIN</Label>
-						<Input
-							id="pin"
-							type="password"
-							inputMode="numeric"
-							autoComplete="current-password"
-							maxLength={6}
-							placeholder="••••••"
-							value={field.state.value}
-							onChange={(e) => {
-								field.handleChange(
-									e.target.value.replace(/\D/g, "").slice(0, 6),
-								);
-								setError(null);
-							}}
-							onBlur={field.handleBlur}
-							aria-invalid={showFieldError(field.state.meta) || undefined}
-							aria-describedby="pin-error"
-							className="h-11 text-base tracking-[0.4em]"
-						/>
-						<FieldError meta={field.state.meta} id="pin-error" />
-					</div>
-				)}
+				{(field) => {
+					const invalid = Boolean(error) || showFieldError(field.state.meta);
+					return (
+						<div className="grid gap-1.5">
+							<Label htmlFor="pin">PIN</Label>
+							<Input
+								ref={pinRef}
+								id="pin"
+								type="password"
+								inputMode="numeric"
+								autoComplete="current-password"
+								maxLength={6}
+								placeholder="••••••"
+								value={field.state.value}
+								onChange={(e) => {
+									field.handleChange(
+										e.target.value.replace(/\D/g, "").slice(0, 6),
+									);
+									setError(null);
+								}}
+								onBlur={field.handleBlur}
+								aria-invalid={invalid || undefined}
+								aria-describedby="pin-error"
+								className="h-11 text-base tracking-[0.4em]"
+							/>
+							{error ? (
+								<Alert id="pin-error" variant="destructive">
+									<AlertCircleIcon />
+									<AlertTitle>{error}</AlertTitle>
+								</Alert>
+							) : (
+								<FieldError meta={field.state.meta} id="pin-error" />
+							)}
+						</div>
+					);
+				}}
 			</form.Field>
-			{error && (
-				<p role="alert" className="text-xs text-destructive">
-					{error}
-				</p>
-			)}
 			<form.Subscribe selector={(s) => s.isSubmitting}>
 				{(isSubmitting) => (
 					<Button type="submit" size="lg" disabled={isSubmitting}>
