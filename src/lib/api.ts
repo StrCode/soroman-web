@@ -271,13 +271,14 @@ export type TrackedTruck = {
 	index: number;
 	plate: string | null;
 	status: TruckStatus;
-	/** Human phrasing of the status ("At the depot", "Loaded", …). */
+	/** Human phrasing of the status ("At the depot", "Ticket issued", …). */
 	statusLabel: string;
 };
 
 /**
  * Owner detail truck — public tracking fields plus the declared quantity and
- * optional driver, so the dashboard can edit pickup declarations before gate-in.
+ * optional driver, so the dashboard can edit pickup declarations while loads
+ * are still pending.
  */
 export type OrderTruck = TrackedTruck & {
 	quantity: number;
@@ -1229,7 +1230,8 @@ export const api = {
 
 		/**
 		 * Replace the pickup truck declaration on an order (plate/driver optional).
-		 * Only while loads are still pending — after gate-in the depot owns corrections.
+		 * Only while every load is still pending — once any load leaves pending,
+		 * the depot owns corrections.
 		 */
 		updateTrucks: async (
 			ref: string,
