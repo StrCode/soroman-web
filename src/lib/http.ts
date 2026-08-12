@@ -17,9 +17,12 @@ import { env } from "@/env";
 
 export class ApiError extends Error {
 	status: number;
-	constructor(status: number, message: string) {
+	/** Optional server `data` payload (e.g. account-deletion blockers). */
+	data?: unknown;
+	constructor(status: number, message: string, data?: unknown) {
 		super(message);
 		this.status = status;
+		this.data = data;
 	}
 }
 
@@ -77,7 +80,7 @@ function toError(res: Response, body: Json): ApiError {
 		typeof body.message === "string" && body.message
 			? body.message
 			: "Something went wrong. Please try again.";
-	return new ApiError(res.status, message);
+	return new ApiError(res.status, message, body.data);
 }
 
 async function rawFetch(
