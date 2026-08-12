@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
-import { env } from "@/env";
 import {
 	api,
 	formatPriceValidUntil,
@@ -24,8 +23,6 @@ export default function InvoiceStep({
 	const [account, setAccount] = useState<VirtualAccount | null>(null);
 	const [credits, setCredits] = useState<PaymentCredit[]>([]);
 	const [now, setNow] = useState(() => Date.now());
-	const [simulating, setSimulating] = useState(false);
-	const [simError, setSimError] = useState<string | null>(null);
 	const [walletBalance, setWalletBalance] = useState<number | null>(null);
 	const [payingFromWallet, setPayingFromWallet] = useState(false);
 	const [walletPaid, setWalletPaid] = useState(false);
@@ -78,7 +75,7 @@ export default function InvoiceStep({
 		};
 	}, []);
 
-	// Mock webhook stream — starts once the account exists, like the real one.
+	// Poll for transfer confirmation once the account exists.
 	// Stops once paid from wallet so it can't double-count the same order.
 	useEffect(() => {
 		if (!account || walletPaid) return;
@@ -88,22 +85,6 @@ export default function InvoiceStep({
 			),
 		);
 	}, [account, order.total, walletPaid]);
-
-	// Testers only. Fires the backend's test-mode simulate-payment; the credits
-	// watcher above then flips the invoice to paid on its next poll, so there's
-	// nothing to wire here beyond triggering it. Stays "confirming" until paid.
-	const simulate = async () => {
-		setSimulating(true);
-		setSimError(null);
-		try {
-			await api.payments.simulate();
-		} catch (e) {
-			setSimError(
-				e instanceof Error ? e.message : "Could not simulate payment.",
-			);
-			setSimulating(false);
-		}
-	};
 
 	// Pay the whole bill from wallet balance. On success we record one wallet
 	// credit for the total, which flips the invoice to paid and stops the
@@ -268,33 +249,7 @@ export default function InvoiceStep({
 								: ""}
 							Transferred but not showing? It usually lands within minutes, and
 							we'll SMS you the moment it does.
-							<span className="text-muted-foreground/50">
-								{" "}
-								(Demo: transfers are simulated and land automatically.)
-							</span>
 						</p>
-					)}
-
-					{env.VITE_ENABLE_DEV_PAYMENT && !fullyPaid && (
-						<div className="mt-4 border-t border-dashed pt-3">
-							<Button
-								size="sm"
-								variant="outline"
-								onClick={simulate}
-								disabled={simulating || !account}
-							>
-								{simulating ? "Confirming payment…" : "Simulate payment (test)"}
-							</Button>
-							<p className="mt-1.5 text-[0.6rem] leading-relaxed text-muted-foreground/60">
-								Testers only — credits your wallet and confirms this order.
-								Disabled on production servers.
-							</p>
-							{simError && (
-								<p className="mt-1 text-[0.65rem] text-destructive">
-									{simError}
-								</p>
-							)}
-						</div>
 					)}
 				</div>
 

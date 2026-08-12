@@ -1380,25 +1380,6 @@ export const api = {
 		},
 
 		/**
-		 * Test-only: simulate a bank transfer for every just-placed order, the web
-		 * mirror of the WhatsApp "I've paid ✅ (test)" button. Fires one request per
-		 * order; the backend refuses outside test mode (403). Confirmation still
-		 * arrives through watchCredits' polling, so the invoice UI is unchanged.
-		 */
-		simulate: async (): Promise<void> => {
-			const placement = lastPlacement;
-			if (!placement) return;
-			for (const orderId of placement.orderIds) {
-				await request<unknown>(
-					`/api/customer/orders/${orderId}/simulate-payment`,
-					{
-						method: "POST",
-					},
-				);
-			}
-		},
-
-		/**
 		 * Pay every just-placed order from the customer's wallet balance — the
 		 * invoice screen's "Pay from wallet" action, offered when the balance covers
 		 * the total. Each order flips to Paid synchronously (no transfer, no
