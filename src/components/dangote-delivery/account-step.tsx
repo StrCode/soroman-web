@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DevCodeHint } from "@/components/auth/dev-code-hint";
 import OtpInput from "@/components/auth/otp-input";
 import {
@@ -67,6 +67,9 @@ export default function AccountStep({
 	const [remember, setRemember] = useState(true);
 	const [devCode, setDevCode] = useState<string | null>(null);
 	const [sentPhone, setSentPhone] = useState<string | null>(null);
+	// Sync lock — parent `busy` state alone can't stop autofill + Continue
+	// from firing two verifies before the first re-render disables the form.
+	const verifyInFlight = useRef(false);
 
 	useEffect(() => {
 		if (resendIn <= 0) return;
@@ -117,6 +120,8 @@ export default function AccountStep({
 			onError("Enter the 6-digit code we texted you.");
 			return;
 		}
+		if (verifyInFlight.current) return;
+		verifyInFlight.current = true;
 		onBusy(true);
 		onError(null);
 		try {
@@ -149,6 +154,7 @@ export default function AccountStep({
 					: "That code didn't work. Try again.",
 			);
 		} finally {
+			verifyInFlight.current = false;
 			onBusy(false);
 		}
 	};

@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { DevCodeHint } from "@/components/auth/dev-code-hint";
@@ -68,6 +68,9 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 	const [code, setCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isBusy, setIsBusy] = useState(false);
+	// Sync lock — React state alone can't stop autofill + Enter / double-tap
+	// from firing two verifies before the first re-render disables the form.
+	const verifyInFlight = useRef(false);
 	const [resendIn, setResendIn] = useState(0);
 	const [devCode, setDevCode] = useState<string | null>(null);
 
@@ -118,7 +121,8 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 	});
 
 	const verifyCode = async (otp: string) => {
-		if (!phone || isBusy) return;
+		if (!phone || verifyInFlight.current) return;
+		verifyInFlight.current = true;
 		setIsBusy(true);
 		setError(null);
 		try {
@@ -152,6 +156,7 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 					: "That code didn't work. Try again.",
 			);
 		} finally {
+			verifyInFlight.current = false;
 			setIsBusy(false);
 		}
 	};
