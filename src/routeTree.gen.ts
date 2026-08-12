@@ -15,6 +15,7 @@ import { Route as SlimRouteImport } from './routes/_slim'
 import { Route as AuthedDashboardRouteRouteImport } from './routes/_authed/dashboard/route'
 import { Route as SiteIndexRouteImport } from './routes/_site/index'
 import { Route as SiteContactRouteImport } from './routes/_site/contact'
+import { Route as SiteDeleteAccountRouteImport } from './routes/_site/delete-account'
 import { Route as SiteFaqRouteImport } from './routes/_site/faq'
 import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
@@ -67,6 +68,11 @@ const SiteIndexRoute = SiteIndexRouteImport.update({
 const SiteContactRoute = SiteContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => SiteRoute,
+} as any)
+const SiteDeleteAccountRoute = SiteDeleteAccountRouteImport.update({
+  id: '/delete-account',
+  path: '/delete-account',
   getParentRoute: () => SiteRoute,
 } as any)
 const SiteFaqRoute = SiteFaqRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/': typeof SiteIndexRoute
   '/dashboard': typeof AuthedDashboardRouteRouteWithChildren
   '/contact': typeof SiteContactRoute
+  '/delete-account': typeof SiteDeleteAccountRoute
   '/faq': typeof SiteFaqRoute
   '/privacy': typeof SitePrivacyRoute
   '/terms': typeof SiteTermsRoute
@@ -242,6 +249,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof SiteIndexRoute
   '/contact': typeof SiteContactRoute
+  '/delete-account': typeof SiteDeleteAccountRoute
   '/faq': typeof SiteFaqRoute
   '/privacy': typeof SitePrivacyRoute
   '/terms': typeof SiteTermsRoute
@@ -276,6 +284,7 @@ export interface FileRoutesById {
   '/_slim': typeof SlimRouteWithChildren
   '/_authed/dashboard': typeof AuthedDashboardRouteRouteWithChildren
   '/_site/contact': typeof SiteContactRoute
+  '/_site/delete-account': typeof SiteDeleteAccountRoute
   '/_site/faq': typeof SiteFaqRoute
   '/_site/privacy': typeof SitePrivacyRoute
   '/_site/terms': typeof SiteTermsRoute
@@ -310,6 +319,7 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/contact'
+    | '/delete-account'
     | '/faq'
     | '/privacy'
     | '/terms'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/contact'
+    | '/delete-account'
     | '/faq'
     | '/privacy'
     | '/terms'
@@ -373,6 +384,7 @@ export interface FileRouteTypes {
     | '/_slim'
     | '/_authed/dashboard'
     | '/_site/contact'
+    | '/_site/delete-account'
     | '/_site/faq'
     | '/_site/privacy'
     | '/_site/terms'
@@ -450,6 +462,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof SiteContactRouteImport
+      parentRoute: typeof SiteRoute
+    }
+    '/_site/delete-account': {
+      id: '/_site/delete-account'
+      path: '/delete-account'
+      fullPath: '/delete-account'
+      preLoaderRoute: typeof SiteDeleteAccountRouteImport
       parentRoute: typeof SiteRoute
     }
     '/_site/faq': {
@@ -688,6 +707,7 @@ const AuthedRouteWithChildren =
 
 interface SiteRouteChildren {
   SiteContactRoute: typeof SiteContactRoute
+  SiteDeleteAccountRoute: typeof SiteDeleteAccountRoute
   SiteFaqRoute: typeof SiteFaqRoute
   SitePrivacyRoute: typeof SitePrivacyRoute
   SiteTermsRoute: typeof SiteTermsRoute
@@ -697,6 +717,7 @@ interface SiteRouteChildren {
 
 const SiteRouteChildren: SiteRouteChildren = {
   SiteContactRoute: SiteContactRoute,
+  SiteDeleteAccountRoute: SiteDeleteAccountRoute,
   SiteFaqRoute: SiteFaqRoute,
   SitePrivacyRoute: SitePrivacyRoute,
   SiteTermsRoute: SiteTermsRoute,

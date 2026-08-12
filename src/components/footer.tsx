@@ -74,6 +74,12 @@ export default function Footer() {
 							>
 								Terms
 							</Link>
+							<Link
+								to="/delete-account"
+								className="transition-colors duration-500 ease-luxe hover:text-foreground"
+							>
+								Delete account
+							</Link>
 						</nav>
 						{/* Appearance is a preference, not a task — it lives here rather
                 than competing with the CTA in the header. */}
