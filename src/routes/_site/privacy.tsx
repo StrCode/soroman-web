@@ -69,7 +69,7 @@ const SECTIONS = [
 	{
 		title: "Your choices",
 		body: [
-			"You can request access to, correction of, or deletion of personal information we hold about you, subject to legal retention requirements, by contacting the desk at the email above.",
+			"You can delete your account yourself from the Soroman app or website (Settings → Delete account), or request access, correction, or deletion by contacting the desk at the email above. Some records may be retained where the law requires it.",
 			"Transactional SMS about your orders is part of fulfilment. If you stop using the service and want marketing or non-essential messages stopped, tell the desk — order-critical messages may still be sent while an order is open.",
 		],
 	},
@@ -134,6 +134,13 @@ function PrivacyPage() {
 						className="text-accent underline-offset-4 hover:underline"
 					>
 						terms &amp; conditions
+					</Link>
+					, how to{" "}
+					<Link
+						to="/delete-account"
+						className="text-accent underline-offset-4 hover:underline"
+					>
+						delete your account
 					</Link>
 					, or{" "}
 					<Link

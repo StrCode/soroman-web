@@ -4,9 +4,10 @@
  * serve yet are still mocked and say so at their definition:
  *
  *   REAL  auth.requestOtp / register / verifyOtp / loginWithPin / logout,
- *         restoreSession, me.update / virtualAccount / setPin, catalog.*,
- *         orders.place / list / get, dashboard.overview, wallet.transactions,
- *         tracking.lookup, payments.dedicatedAccount, watchCredits (polling)
+ *         restoreSession, me.update / virtualAccount / setPin /
+ *         requestDeleteOtp / deleteAccount, catalog.*, orders.place / list /
+ *         get, dashboard.overview, wallet.transactions, tracking.lookup,
+ *         payments.dedicatedAccount, watchCredits (polling)
  *   LOCAL me.settings (browser-only buyer preferences)
  *
  * A PIN is the only credential. It signs in against either identifier on the
@@ -972,6 +973,38 @@ export const api = {
 		/** Set (or replace) the 6-digit device PIN. Must be signed in. */
 		setPin: async (pin: string): Promise<void> => {
 			await request(`${AUTH}/pin`, { method: "POST", body: { pin } });
+		},
+
+		/**
+		 * Send a purpose-scoped deletion OTP to the signed-in customer's phone.
+		 * Blockers (wallet balance, open orders) return 409 before an SMS is burnt.
+		 */
+		requestDeleteOtp: async (): Promise<{ devCode?: string }> => {
+			const body = await request<{ devCode?: string }>(
+				`${AUTH}/account/request-otp`,
+				{
+					method: "POST",
+					raw: true,
+				},
+			);
+			return { devCode: body.devCode };
+		},
+
+		/**
+		 * Permanently delete the signed-in customer account (App Store 5.1.1(v)).
+		 * Requires the account_deletion OTP from requestDeleteOtp —
+		 * DELETE /api/customer/auth/account { code }.
+		 */
+		deleteAccount: async (code: string): Promise<void> => {
+			await request(`${AUTH}/account`, {
+				method: "DELETE",
+				csrf: true,
+				retryOn401: false,
+				body: { code },
+			});
+			clearTokens();
+			knownCustomer = null;
+			lastPlacement = null;
 		},
 
 		/**

@@ -5,6 +5,7 @@ import { type ReactNode, useEffect } from "react";
 //   ActiveSessionsPanel,
 //   TrustedDevicesPanel,
 // } from "@/components/account/devices-panel";
+import { DeleteAccountPanel } from "@/components/account/delete-account-panel";
 import { SecurityPanel } from "@/components/account/security-panel";
 import { MICRO } from "@/components/dashboard/panel";
 import { NotificationSettingsPanel } from "@/components/notifications/settings-panel";
@@ -30,9 +31,9 @@ function SettingsPage() {
 	const hash = useRouterState({ select: (s) => s.location.hash });
 
 	useEffect(() => {
-		if (hash !== "#notifications") return;
+		if (hash !== "#notifications" && hash !== "#delete-account") return;
 		document
-			.getElementById("notifications")
+			.getElementById(hash.slice(1))
 			?.scrollIntoView({ behavior: "smooth", block: "start" });
 	}, [hash]);
 
@@ -70,6 +71,10 @@ function SettingsPage() {
 					delay="160ms"
 				>
 					<NotificationSettingsPanel />
+				</SettingsGroup>
+
+				<SettingsGroup label="Account" hint="Permanent removal" delay="230ms">
+					<DeleteAccountPanel />
 				</SettingsGroup>
 
 				{/* Devices section hidden for now. To restore: uncomment this block,

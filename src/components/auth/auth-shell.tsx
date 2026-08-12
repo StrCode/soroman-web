@@ -47,6 +47,10 @@ export default function AuthShell({ children }: { children: React.ReactNode }) {
 					·{" "}
 					<Link to="/terms" className="hover:text-foreground">
 						Terms
+					</Link>{" "}
+					·{" "}
+					<Link to="/delete-account" className="hover:text-foreground">
+						Delete account
 					</Link>
 				</p>
 			</div>
