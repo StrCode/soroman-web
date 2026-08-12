@@ -9,11 +9,14 @@ import { normalizePhone } from "@/lib/phone";
  */
 
 // No example number in the message — the field's placeholder already shows
-// one in the selected country's own format.
+// a Nigerian national format.
 export const phoneSchema = z
 	.string()
 	.min(1, "Enter your phone number.")
-	.refine((v) => normalizePhone(v) !== null, "Enter a valid phone number.");
+	.refine(
+		(v) => normalizePhone(v) !== null,
+		"Enter a valid Nigerian phone number.",
+	);
 
 export const emailSchema = z
 	.string()
