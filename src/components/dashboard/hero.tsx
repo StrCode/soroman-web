@@ -25,11 +25,17 @@ import { cn } from "@/lib/utils";
  * unpaid, so this card flips itself from Invoice to In-motion on its own.
  */
 
-const STEPS = ["Verified", "Invoiced", "Paid", "Loading", "Loaded"] as const;
+const STEPS = [
+	"Invoiced",
+	"Paid",
+	"Released",
+	"Loading",
+	"Completed",
+] as const;
 
 const STATUS_STEP: Partial<Record<OrderStatus, number>> = {
-	awaiting_payment: 2,
-	paid: 3,
+	awaiting_payment: 1,
+	paid: 2,
 	released: 3,
 	loading: 4,
 	loaded: 5,
@@ -39,6 +45,7 @@ const MOTION_LABEL: Partial<Record<OrderStatus, string>> = {
 	paid: "Paid — preparing your order",
 	released: "Released for loading",
 	loading: "Loading at the depot",
+	loaded: "Completed",
 };
 
 const describe = (o: OrderRecord) =>
