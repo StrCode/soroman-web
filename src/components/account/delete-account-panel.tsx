@@ -19,6 +19,21 @@ import { cn } from "@/lib/utils";
 const OTP_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 60;
 
+/** Prefer the structured blockers list when the API returns a 409. */
+function deletionErrorMessage(err: unknown, fallback: string): string {
+	if (!(err instanceof ApiError)) return fallback;
+	const blockers =
+		err.data &&
+		typeof err.data === "object" &&
+		Array.isArray((err.data as { blockers?: unknown }).blockers)
+			? ((err.data as { blockers: unknown[] }).blockers.filter(
+					(b): b is string => typeof b === "string" && b.length > 0,
+				) as string[])
+			: null;
+	if (blockers && blockers.length > 0) return blockers.join(" ");
+	return err.message || fallback;
+}
+
 /**
  * Danger-zone panel for permanent account deletion. Matches the backend's
  * two-step flow: POST /account/request-otp, then DELETE /account { code }.
@@ -75,9 +90,10 @@ export function DeleteAccountPanel() {
 			);
 		} catch (err) {
 			toast.error(
-				err instanceof ApiError
-					? err.message
-					: "Could not send the code. Check your connection and try again.",
+				deletionErrorMessage(
+					err,
+					"Could not send the code. Check your connection and try again.",
+				),
 			);
 		} finally {
 			setSending(false);
@@ -94,9 +110,10 @@ export function DeleteAccountPanel() {
 		} catch (err) {
 			setCode("");
 			toast.error(
-				err instanceof ApiError
-					? err.message
-					: "Could not delete the account. Try again or contact the desk.",
+				deletionErrorMessage(
+					err,
+					"Could not delete the account. Try again or contact the desk.",
+				),
 			);
 			setDeleting(false);
 		}
@@ -119,8 +136,9 @@ export function DeleteAccountPanel() {
 						<p className="text-sm font-medium">Remove your Soroman account</p>
 						<p className="mt-1 text-sm text-muted-foreground">
 							Deletes your login and personal data we are not required to keep.
-							Spend or withdraw any wallet balance and finish open orders first.
-							We confirm with a code sent to your phone. This cannot be undone.
+							Clear any wallet balance by spending it on an order, cancel unpaid
+							orders, and wait for paid orders to complete at the depot first. We
+							confirm with a code sent to your phone. This cannot be undone.
 						</p>
 					</div>
 					<Button

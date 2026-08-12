@@ -34,7 +34,7 @@ const STEPS = [
 
 const AFTER = [
 	"Your login, profile, notification preferences, and saved order defaults are removed.",
-	"You must clear any wallet balance and finish or cancel open orders first — otherwise deletion is refused.",
+	"You must spend any wallet balance, cancel unpaid orders, and wait for paid orders to complete at the depot first — otherwise deletion is refused.",
 	"We may keep invoices, payment records, and fulfilment logs for accounting, tax, dispute, and regulatory requirements.",
 	"Deletion is permanent. To order again later you create a new account.",
 ] as const;
