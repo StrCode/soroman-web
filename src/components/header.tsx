@@ -46,9 +46,6 @@ export default function Header() {
 	const isAuthed = auth.status === "authed";
 	const isGuest = auth.status === "guest";
 	const isAuthLoading = auth.status === "loading";
-	// Signed-in buyers jump into the order chooser; guests land on prices first.
-	const startOrderTo = isAuthed ? ("/order" as const) : ("/" as const);
-	const startOrderHash = isAuthed ? undefined : ("prices" as const);
 
 	/**
 	 * The header is transparent over the hero and only earns its background once
@@ -270,9 +267,7 @@ export default function Header() {
 								nativeButton={false}
 								className="hidden md:inline-flex"
 								render={
-									<Link to={startOrderTo} hash={startOrderHash}>
-										Start an order
-									</Link>
+									<Link to="/order">Start an order</Link>
 								}
 							/>
 						)}
@@ -340,11 +335,7 @@ export default function Header() {
 								<Button
 									nativeButton={false}
 									render={
-										<Link
-											to={startOrderTo}
-											hash={startOrderHash}
-											onClick={() => setMenuOpen(false)}
-										>
+										<Link to="/order" onClick={() => setMenuOpen(false)}>
 											Start an order
 										</Link>
 									}

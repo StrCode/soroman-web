@@ -129,7 +129,7 @@ export default function Hero() {
 						<Button
 							size="lg"
 							nativeButton={false}
-							render={<a href="#prices">Order Now</a>}
+							render={<Link to="/order">Order Now</Link>}
 						/>
 						<Button
 							size="lg"
