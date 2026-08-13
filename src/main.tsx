@@ -25,12 +25,21 @@ const queryClient = new QueryClient({
 	},
 });
 
+const prefersReducedMotion =
+	typeof window !== "undefined" &&
+	window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 const router = createRouter({
 	routeTree,
 	defaultPreload: "intent",
 	// Query owns caching — every preload/load runs the loader and Query dedupes.
 	defaultPreloadStaleTime: 0,
 	scrollRestoration: true,
+	// Hash links (`/#track`) call element.scrollIntoView(). `true` (the default)
+	// is an instant jump; pass the options object for a smooth in-page scroll.
+	defaultHashScrollIntoView: {
+		behavior: prefersReducedMotion ? "instant" : "smooth",
+	},
 	defaultPendingComponent: () => <Loader />,
 	// Content-only — parent layouts keep their own chrome. Full marketing
 	// frame for truly unknown URLs lives on the root notFoundComponent.
