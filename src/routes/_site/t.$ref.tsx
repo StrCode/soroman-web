@@ -433,7 +433,7 @@ function NotFound({ refInput }: { refInput: string }) {
 					className="mt-6"
 					nativeButton={false}
 					render={
-						<Link to="/" hash="track">
+						<Link to="/" hash="track" viewTransition={false}>
 							Try another reference
 						</Link>
 					}

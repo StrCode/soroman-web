@@ -152,6 +152,7 @@ export default function Header() {
 								key={label}
 								to={to}
 								hash={hash}
+								viewTransition={!hash}
 								className="group relative py-1 text-sm text-muted-foreground transition-colors duration-500 ease-luxe hover:text-foreground motion-reduce:transition-none"
 								activeOptions={{ exact: true, includeHash: false }}
 								// Anchors on the landing page all match "/", so letting them
@@ -305,6 +306,7 @@ export default function Header() {
 									key={label}
 									to={to}
 									hash={hash}
+									viewTransition={!hash}
 									onClick={() => setMenuOpen(false)}
 									className="block border-b border-border py-4 text-base text-muted-foreground last:border-b-0"
 									activeOptions={{ exact: !hash, includeHash: false }}

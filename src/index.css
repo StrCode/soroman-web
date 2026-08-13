@@ -45,6 +45,40 @@
 	animation: snapshot-rise 500ms var(--ease-luxe) both;
 }
 
+/*
+ * Named so the sticky header/footer stay put. The root snapshot is frozen —
+ * otherwise chrome would fade on every FAQ/Contact click. Hash-only moves
+ * skip this entirely (see defaultViewTransition.types).
+ */
+@utility vt-page {
+	view-transition-name: page;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation: none;
+}
+
+::view-transition-old(page) {
+	animation: 180ms var(--ease-luxe) both vt-fade-out;
+}
+
+::view-transition-new(page) {
+	animation: 220ms var(--ease-luxe) both vt-fade-in;
+}
+
+@keyframes vt-fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes vt-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
 .live-dot {
 	animation: live-pulse 2s var(--ease-luxe) infinite;
 }
@@ -53,5 +87,11 @@
 	.snapshot-rise,
 	.live-dot {
 		animation: none;
+	}
+
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
+		animation: none !important;
 	}
 }

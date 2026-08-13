@@ -29,6 +29,10 @@ const prefersReducedMotion =
 	typeof window !== "undefined" &&
 	window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+function isDashboardPath(pathname: string) {
+	return pathname === "/dashboard" || pathname.startsWith("/dashboard/");
+}
+
 const router = createRouter({
 	routeTree,
 	defaultPreload: "intent",
@@ -40,6 +44,20 @@ const router = createRouter({
 	defaultHashScrollIntoView: {
 		behavior: prefersReducedMotion ? "instant" : "smooth",
 	},
+	// Page switches wrap in document.startViewTransition(). Hash-only moves
+	// and anything in the dashboard skip so those stay instant.
+	defaultViewTransition: prefersReducedMotion
+		? false
+		: {
+				types: ({ pathChanged, fromLocation, toLocation }) => {
+					if (!pathChanged) return false;
+					if (isDashboardPath(toLocation.pathname)) return false;
+					if (fromLocation && isDashboardPath(fromLocation.pathname)) {
+						return false;
+					}
+					return ["page-fade"];
+				},
+			},
 	defaultPendingComponent: () => <Loader />,
 	// Content-only — parent layouts keep their own chrome. Full marketing
 	// frame for truly unknown URLs lives on the root notFoundComponent.
