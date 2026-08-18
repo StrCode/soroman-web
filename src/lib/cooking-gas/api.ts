@@ -49,6 +49,14 @@ export type LpgOrderRequest = {
 	deliveryPrice: string | null;
 	totalAmount: string | null;
 	createdAt: string;
+	/**
+	 * The LPG station's bank account to pay into — set once staff approve and
+	 * price the request (same admin-configured Bank Accounts feature depot
+	 * orders use). Null until then.
+	 */
+	virtualAccountNumber: string | null;
+	virtualAccountBank: string | null;
+	virtualAccountName: string | null;
 };
 
 const CATALOG = "/api/lpg-catalog";

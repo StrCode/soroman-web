@@ -129,7 +129,9 @@ const pastOrderColumns: AppColumnDef<OrderRecord>[] = [
 function OverviewPage() {
 	const auth = useAuth();
 	const customer = auth.status === "authed" ? auth.customer : null;
-	const profileReady = Boolean(customer?.name || customer?.company_name);
+	// Was also gating the (now-disabled) personal virtualAccount query below —
+	// see that block for why. Left commented alongside it.
+	// const profileReady = Boolean(customer?.name || customer?.company_name);
 	const pageVisible = usePageVisible();
 	const unpaidPoll = visibleRefetch(pageVisible, LIVE_PAYMENT_MS);
 
@@ -180,14 +182,22 @@ function OverviewPage() {
 	});
 	const cookingGasOrders = cookingGasOrdersResult?.requests;
 
-	// The dedicated funding account (404s until Paystack assigns one).
-	const accountQuery = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		enabled: profileReady,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
+	// Disabled: this drove the hero's transfer account and WalletCard's
+	// "Fund via transfer" footer via the customer's personal Paystack
+	// dedicated account. Paystack DVA funding is off backend-side now —
+	// GET /api/customer/profile always returns virtualAccount: null — so
+	// this query only ever 404'd outside the same tab that just placed an
+	// order. The hero now reads its account straight off the order
+	// response instead (order.account, see components/dashboard/hero.tsx);
+	// WalletCard's footer is commented out entirely. Kept here for
+	// reinstatement if Paystack comes back.
+	// const accountQuery = useQuery({
+	// 	queryKey: ["virtualAccount"],
+	// 	queryFn: api.me.virtualAccount,
+	// 	enabled: profileReady,
+	// 	retry: false,
+	// 	staleTime: 5 * 60_000,
+	// });
 
 	const { products } = useCatalog();
 	const todayPrice = useMemo(() => {
@@ -273,10 +283,7 @@ function OverviewPage() {
 				{isLoading ? (
 					<Skeleton className="h-44 w-full rounded-xl" />
 				) : (
-					<DashboardHero
-						order={primaryOrder}
-						account={accountQuery.data ?? null}
-					/>
+					<DashboardHero order={primaryOrder} />
 				)}
 			</div>
 
@@ -309,8 +316,6 @@ function OverviewPage() {
 						<WalletCard
 							balance={overview.wallet.balance}
 							todayPrice={todayPrice}
-							account={accountQuery.data ?? null}
-							accountPending={profileReady && accountQuery.isLoading}
 						/>
 					)}
 				</div>

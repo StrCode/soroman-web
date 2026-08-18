@@ -5,7 +5,10 @@ import { MICRO, PANEL } from "@/components/dashboard/panel";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CopyIconButton } from "@/components/virtual-account";
+// CopyIconButton was only used by the disabled "Fund via transfer" panel
+// below (customer.virtualAccount is always null now — Paystack DVA funding
+// is off backend-side). See that block for the full note.
+// import { CopyIconButton } from "@/components/virtual-account";
 import { api, type WalletTransaction } from "@/lib/api";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira } from "@/lib/use-catalog";
@@ -19,7 +22,7 @@ export const Route = createFileRoute("/_authed/dashboard/wallet")({
 			{
 				name: "description",
 				content:
-					"View your Soroman wallet balance, virtual account details, and transaction history.",
+					"View your Soroman wallet balance and transaction history.",
 			},
 		],
 	}),
@@ -117,13 +120,19 @@ function WalletPage() {
 		queryFn: () => api.dashboard.overview(),
 	});
 
-	// 404s until Paystack assigns a dedicated account — not a hard failure.
-	const accountQuery = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
+	// Disabled: fetched the customer's personal Paystack dedicated account for
+	// the "Fund via transfer" panel below. Paystack DVA funding is off
+	// backend-side now — GET /api/customer/profile always returns
+	// virtualAccount: null — so this only ever 404'd. Wallet top-ups are
+	// staff-recorded manual deposits now; there's no personal always-available
+	// funding account to show here. Kept for reinstatement if Paystack comes
+	// back.
+	// const accountQuery = useQuery({
+	// 	queryKey: ["virtualAccount"],
+	// 	queryFn: api.me.virtualAccount,
+	// 	retry: false,
+	// 	staleTime: 5 * 60_000,
+	// });
 
 	const historyQuery = useQuery({
 		queryKey: ["wallet-transactions", page],
@@ -131,8 +140,6 @@ function WalletPage() {
 	});
 
 	const balance = overviewQuery.data?.wallet.balance;
-	const account = accountQuery.data ?? null;
-	const accountPending = accountQuery.isLoading;
 	const rows = historyQuery.data?.transactions ?? [];
 	const pagination = historyQuery.data?.pagination;
 
@@ -161,10 +168,7 @@ function WalletPage() {
 				</Button>
 			</header>
 
-			<div
-				className="snapshot-rise mt-8 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]"
-				style={{ animationDelay: "60ms" }}
-			>
+			<div className="snapshot-rise mt-8" style={{ animationDelay: "60ms" }}>
 				<section
 					className={cn(PANEL, "px-6 py-5")}
 					aria-label="Current balance"
@@ -183,40 +187,49 @@ function WalletPage() {
 					</p>
 				</section>
 
-				<section className={cn(PANEL, "px-6 py-5")} aria-label="Fund wallet">
-					<span className={MICRO}>Fund via transfer</span>
-					{accountPending ? (
-						<Skeleton className="mt-3 h-5 w-56" />
-					) : account ? (
-						<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-							<span className="inline-flex items-center gap-2 whitespace-nowrap">
-								<span className="text-lg font-semibold tracking-wide tabular-nums">
-									{account.account_number}
-								</span>
-								<CopyIconButton
-									value={account.account_number}
-									label="Copy account number"
-								/>
-							</span>
-							<span className="text-xs text-muted-foreground">
-								{account.bank} · {account.account_name}
-							</span>
-						</div>
-					) : (
-						<div className="mt-3 space-y-2">
-							<p className="text-sm text-muted-foreground">
-								Your dedicated account is created when you place your first
-								order — it appears here and stays yours for every payment after.
-							</p>
-							<Link
-								to="/order"
-								className="inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
-							>
-								Place your first order →
-							</Link>
-						</div>
-					)}
-				</section>
+				{/*
+				 * Disabled: "Fund wallet" panel showing the customer's personal
+				 * Paystack dedicated account. No standalone always-available
+				 * funding account exists anymore — deposits are staff-recorded
+				 * manual bank transfers, and per-order transfer details show on
+				 * the order/invoice itself. Kept here (commented) for easy
+				 * reinstatement.
+				 *
+				 * <section className={cn(PANEL, "px-6 py-5")} aria-label="Fund wallet">
+				 * 	<span className={MICRO}>Fund via transfer</span>
+				 * 	{accountPending ? (
+				 * 		<Skeleton className="mt-3 h-5 w-56" />
+				 * 	) : account ? (
+				 * 		<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+				 * 			<span className="inline-flex items-center gap-2 whitespace-nowrap">
+				 * 				<span className="text-lg font-semibold tracking-wide tabular-nums">
+				 * 					{account.account_number}
+				 * 				</span>
+				 * 				<CopyIconButton
+				 * 					value={account.account_number}
+				 * 					label="Copy account number"
+				 * 				/>
+				 * 			</span>
+				 * 			<span className="text-xs text-muted-foreground">
+				 * 				{account.bank} · {account.account_name}
+				 * 			</span>
+				 * 		</div>
+				 * 	) : (
+				 * 		<div className="mt-3 space-y-2">
+				 * 			<p className="text-sm text-muted-foreground">
+				 * 				Your dedicated account is created when you place your first
+				 * 				order — it appears here and stays yours for every payment after.
+				 * 			</p>
+				 * 			<Link
+				 * 				to="/order"
+				 * 				className="inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
+				 * 			>
+				 * 				Place your first order →
+				 * 			</Link>
+				 * 		</div>
+				 * 	)}
+				 * </section>
+				 */}
 			</div>
 
 			<div className="snapshot-rise mt-8" style={{ animationDelay: "110ms" }}>
@@ -225,7 +238,7 @@ function WalletPage() {
 					data={rows}
 					isLoading={historyQuery.isLoading}
 					emptyTitle="No wallet activity yet."
-					emptyDescription="Transfer into your dedicated account to fund the wallet — every credit and order payment will show up here."
+					emptyDescription="Deposits our team records and debits when you pay an order will show up here."
 					pagination={
 						pagination
 							? {

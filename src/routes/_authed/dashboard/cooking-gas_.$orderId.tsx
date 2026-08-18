@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { AccountRows, CopyAllButton } from "@/components/virtual-account";
 import { env } from "@/env";
 import { usePageVisible } from "@/hooks/use-page-visible";
-import { api } from "@/lib/api";
+import { api, type VirtualAccount } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/company";
 import { getMyLpgOrder, type LpgOrderRequest } from "@/lib/cooking-gas/api";
 import { requestOrderLiveMs, visibleRefetch } from "@/lib/live-refetch";
@@ -120,13 +120,18 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 	const total =
 		request.totalAmount != null ? Number(request.totalAmount) : null;
 
-	const { data: account } = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		enabled: quoteReady,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
+	// The station's bank account comes straight off the request's own response
+	// fields (set once staff approve and price it) rather than a separate
+	// customer.virtualAccount lookup — same fix as the dashboard hero's
+	// InvoiceHero, which reads depot orders' `.account` instead of that
+	// personal endpoint.
+	const account: VirtualAccount | null = request.virtualAccountNumber
+		? {
+				bank: request.virtualAccountBank ?? "",
+				account_number: request.virtualAccountNumber,
+				account_name: request.virtualAccountName ?? "",
+			}
+		: null;
 
 	const { data: walletBalance } = useQuery({
 		queryKey: ["wallet-balance"],

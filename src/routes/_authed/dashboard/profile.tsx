@@ -1,5 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { PaymentsPanel } from "@/components/account/payments-panel";
+// PaymentsPanel is disabled — see components/account/payments-panel.tsx.
+// It showed the customer's personal Paystack dedicated account, which no
+// longer exists now that Paystack DVA funding is off backend-side.
+// import { PaymentsPanel } from "@/components/account/payments-panel";
 import { ProfilePanel } from "@/components/account/profile-panel";
 import { MICRO } from "@/components/dashboard/panel";
 import { useAuth } from "@/lib/auth";
@@ -35,7 +38,7 @@ function ProfilePage() {
 					.
 				</h1>
 				<p className="mt-3 max-w-lg text-sm text-muted-foreground">
-					Details on invoices and waybills, plus your dedicated funding account.
+					Details on invoices and waybills.
 				</p>
 			</header>
 
@@ -43,9 +46,15 @@ function ProfilePage() {
 				<ProfilePanel />
 			</div>
 
-			<div className="snapshot-rise mt-6" style={{ animationDelay: "160ms" }}>
-				<PaymentsPanel />
-			</div>
+			{/*
+			 * Disabled: PaymentsPanel showed the customer's personal Paystack
+			 * dedicated account. See components/account/payments-panel.tsx for
+			 * why — kept there (commented) for reinstatement.
+			 *
+			 * <div className="snapshot-rise mt-6" style={{ animationDelay: "160ms" }}>
+			 * 	<PaymentsPanel />
+			 * </div>
+			 */}
 		</div>
 	);
 }

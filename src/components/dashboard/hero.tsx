@@ -7,7 +7,6 @@ import {
 	formatPriceValidUntil,
 	type OrderRecord,
 	type OrderStatus,
-	type VirtualAccount,
 } from "@/lib/api";
 import { seedDraftFromOrder } from "@/lib/order-draft";
 import { formatNaira } from "@/lib/use-catalog";
@@ -23,6 +22,13 @@ import { cn } from "@/lib/utils";
  *   nothing pending  → a calm prompt to start an order.
  * The parent picks the single order to feature and refetches while one is
  * unpaid, so this card flips itself from Invoice to In-motion on its own.
+ *
+ * The transfer account comes straight off `order.account` (the order's own
+ * response field — the depot's bank account since Paystack DVA funding was
+ * disabled backend-side) rather than a separate customer.virtualAccount
+ * lookup. That personal lookup now always 404s outside the same tab/session
+ * that just placed the order, which left this card stuck on its "appears
+ * here in a moment" placeholder forever. Reading it off the order fixes that.
  */
 
 const STEPS = ["Verified", "Invoiced", "Paid", "Loading", "Loaded"] as const;
@@ -48,14 +54,12 @@ const describe = (o: OrderRecord) =>
 
 export default function DashboardHero({
 	order,
-	account,
 }: {
 	order: OrderRecord | null;
-	account: VirtualAccount | null;
 }) {
 	if (!order) return <CleanState />;
 	if (order.status === "awaiting_payment")
-		return <InvoiceHero order={order} account={account} />;
+		return <InvoiceHero order={order} />;
 	return <MotionHero order={order} />;
 }
 
@@ -84,13 +88,8 @@ function CleanState() {
 	);
 }
 
-function InvoiceHero({
-	order,
-	account,
-}: {
-	order: OrderRecord;
-	account: VirtualAccount | null;
-}) {
+function InvoiceHero({ order }: { order: OrderRecord }) {
+	const account = order.account ?? null;
 	// Re-check the deadline periodically so the badge flips without a refresh.
 	const [now, setNow] = useState(() => Date.now());
 	useEffect(() => {

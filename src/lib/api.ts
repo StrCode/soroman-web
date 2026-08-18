@@ -933,7 +933,19 @@ export const api = {
 			return mapCustomer(data.customer);
 		},
 
-		/** The customer's permanent funding account, once Paystack assigns it. */
+		/**
+		 * The customer's permanent funding account, once Paystack assigns it.
+		 *
+		 * Paystack DVA funding is disabled backend-side now — `virtualAccount`
+		 * on GET /api/customer/profile always comes back null, so in practice
+		 * this only ever resolves via the `lastPlacement` fallback (the order
+		 * this tab just placed) and otherwise 404s. Self-service "fund my
+		 * wallet" UI that called this generically (dashboard wallet card,
+		 * wallet page, profile payments panel) has been disabled/hidden — see
+		 * their respective files. Left intact here because payments.dedicatedAccount
+		 * and the order-placement flow still legitimately use the
+		 * `lastPlacement` fallback right after placing an order.
+		 */
 		virtualAccount: async (): Promise<VirtualAccount> => {
 			const data = await request<{
 				virtualAccount: ServerVirtualAccount | null;
