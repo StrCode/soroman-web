@@ -1,4 +1,5 @@
 import { useForm } from "@tanstack/react-form";
+import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -196,7 +197,13 @@ export default function OtpLogin({
 					</h1>
 					<p className="mt-1.5 text-sm text-muted-foreground">
 						{description ??
-							"New here? Same door. Your account is created on the spot."}
+							(registerName
+								? // register() creates the account on the spot, so the "same door"
+									// promise is true here.
+									"New here? Same door. Your account is created on the spot."
+								: // Login-only (requestOtp): an unregistered number gets nothing,
+									// so don't promise on-the-spot signup we can't deliver.
+									"We'll text a one-time code to the number on your account.")}
 					</p>
 				</div>
 				<phoneForm.Field name="phone">
@@ -321,6 +328,26 @@ export default function OtpLogin({
 						</button>
 					)}
 				</p>
+				{/*
+				 * The backend never reveals whether a number is registered
+				 * (anti-enumeration), so a code genuinely won't arrive for a number
+				 * with no account — and the login flow can't tell the difference.
+				 * Rather than dead-end that person on a code that never comes, always
+				 * offer the way into registration, phone carried across. Login-only:
+				 * in registerName mode the account is created on the spot.
+				 */}
+				{!registerName && (
+					<p className="text-xs text-muted-foreground">
+						No code? This number may not have an account yet.{" "}
+						<Link
+							to="/register"
+							search={{ phone: phone ?? undefined }}
+							className="underline underline-offset-4 hover:text-foreground"
+						>
+							Create an account
+						</Link>
+					</p>
+				)}
 			</form>
 		);
 	}

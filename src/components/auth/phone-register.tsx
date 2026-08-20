@@ -48,6 +48,11 @@ type Step = "details" | "code";
 
 type PhoneRegisterProps = {
 	onSuccess: (customer: Customer) => void;
+	/**
+	 * Prefills the phone field — carried over from the login screen when a
+	 * number with no account is handed off to registration.
+	 */
+	initialPhone?: string;
 };
 
 /**
@@ -62,7 +67,10 @@ type PhoneRegisterProps = {
  * The response to /register is deliberately generic (it never confirms
  * whether a number exists), so the UI always advances to the code step.
  */
-export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
+export default function PhoneRegister({
+	onSuccess,
+	initialPhone,
+}: PhoneRegisterProps) {
 	const [step, setStep] = useState<Step>("details");
 	const [phone, setPhone] = useState<string | null>(null);
 	const [code, setCode] = useState("");
@@ -84,7 +92,7 @@ export default function PhoneRegister({ onSuccess }: PhoneRegisterProps) {
 		defaultValues: {
 			name: "",
 			companyName: "",
-			phone: "",
+			phone: initialPhone ?? "",
 			email: "",
 			pin: "",
 			confirm: "",
