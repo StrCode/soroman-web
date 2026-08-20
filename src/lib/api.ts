@@ -4,10 +4,10 @@
  * serve yet are still mocked and say so at their definition:
  *
  *   REAL  auth.requestOtp / register / verifyOtp / loginWithPin / logout,
- *         restoreSession, me.update / virtualAccount / setPin /
+ *         restoreSession, me.update / setPin /
  *         requestDeleteOtp / deleteAccount, catalog.*, orders.place / list /
  *         get, dashboard.overview, wallet.transactions, tracking.lookup,
- *         payments.dedicatedAccount, watchCredits (polling)
+ *         payments.dedicatedAccount (last placement only), watchCredits (polling)
  *   LOCAL me.settings (browser-only buyer preferences)
  *
  * A PIN is the only credential. It signs in against either identifier on the
@@ -130,7 +130,7 @@ export type OrderRecord = {
 	payment_status?: "paid" | "unpaid";
 	/** How the fuel leaves the depot — pickup, or delivery to a state/address. */
 	loading?: LoadingDetails;
-	/** The dedicated funding account, carried while an order is still unpaid. */
+	/** The depot's bank account to pay into, carried while an order is still unpaid. */
 	account?: VirtualAccount | null;
 };
 
@@ -368,12 +368,6 @@ type ServerCustomer = {
 	address?: string;
 };
 
-type ServerVirtualAccount = {
-	bank: string;
-	accountNumber: string;
-	accountName: string;
-};
-
 type SessionData = {
 	customer: ServerCustomer;
 	accessToken: string;
@@ -395,14 +389,6 @@ function mapCustomer(c: ServerCustomer): Customer {
 		name: c.name ?? "",
 		company_name: c.companyName ?? null,
 		email: c.email ?? null,
-	};
-}
-
-function mapVirtualAccount(v: ServerVirtualAccount): VirtualAccount {
-	return {
-		bank: v.bank,
-		account_number: v.accountNumber,
-		account_name: v.accountName,
 	};
 }
 
@@ -451,7 +437,7 @@ type ServerListOrder = {
 	/** Routing state — the delivery destination on delivery orders. */
 	state?: string | null;
 	deliveryAddress?: string | null;
-	/** The dedicated funding account, populated while the order is unpaid. */
+	/** The depot's bank account to pay into, populated while the order is unpaid. */
 	virtualAccountNumber?: string | null;
 	virtualAccountBank?: string | null;
 	virtualAccountName?: string | null;
@@ -935,23 +921,6 @@ export const api = {
 			return mapCustomer(data.customer);
 		},
 
-		/** The customer's permanent funding account, once Paystack assigns it. */
-		virtualAccount: async (): Promise<VirtualAccount> => {
-			const data = await request<{
-				virtualAccount: ServerVirtualAccount | null;
-			}>("/api/customer/profile");
-			if (data.virtualAccount) return mapVirtualAccount(data.virtualAccount);
-			if (lastPlacement) {
-				const p = lastPlacement.payment;
-				return {
-					bank: p.bankName,
-					account_number: p.accountNumber,
-					account_name: p.accountName,
-				};
-			}
-			throw new ApiError(404, "Your dedicated account is still being set up.");
-		},
-
 		/** Browser-local buyer preferences until the backend stores settings. */
 		settings: async (): Promise<CustomerSettings> => {
 			try {
@@ -1366,7 +1335,12 @@ export const api = {
 	},
 
 	payments: {
-		/** Same permanent account as me.virtualAccount, kept for the invoice step. */
+		/**
+		 * The account to pay the just-placed order into — the DEPOT's bank
+		 * account, returned by the placement response. Personal Paystack DVAs
+		 * are gone (the backend is manual-deposit only), so this exists solely
+		 * for the invoice step, which always runs right after a placement.
+		 */
 		dedicatedAccount: async (): Promise<VirtualAccount> => {
 			if (lastPlacement) {
 				const p = lastPlacement.payment;
@@ -1376,7 +1350,7 @@ export const api = {
 					account_name: p.accountName,
 				};
 			}
-			return api.me.virtualAccount();
+			throw new ApiError(404, "No pending order to pay.");
 		},
 
 		/**

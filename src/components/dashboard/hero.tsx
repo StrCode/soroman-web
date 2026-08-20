@@ -167,7 +167,7 @@ function InvoiceHero({
 				{!expired && (
 					<div className="mt-6 rounded-lg border border-foreground/15 bg-muted/40 p-4">
 						<p className="text-[0.65rem] tracking-[0.2em] text-muted-foreground uppercase">
-							Transfer to your Soroman account
+							Transfer to the account for this order
 						</p>
 						{account ? (
 							<div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
@@ -186,7 +186,7 @@ function InvoiceHero({
 							</div>
 						) : (
 							<p className="mt-2 text-sm text-muted-foreground">
-								Your dedicated account appears here in a moment.
+								The payment account is on the order page.
 							</p>
 						)}
 						<div className="mt-3 flex items-center gap-2 border-t border-foreground/10 pt-3">
