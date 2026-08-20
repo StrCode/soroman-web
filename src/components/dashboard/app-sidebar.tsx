@@ -42,6 +42,7 @@ import { env } from "@/env";
 
 import { formatPhoneForDisplay } from "@/lib/api";
 import { authStore, useAuth } from "@/lib/auth";
+import { SUPPORT_WHATSAPP_URL } from "@/lib/company";
 
 // Overview is the home, not a buying action — it sits above the groups.
 // Buy holds the ways money starts moving; Manage holds depot, Dangote, and
@@ -76,7 +77,7 @@ const ACCOUNT = [
 
 // Same desk as the slim header — the dashboard shouldn't be the one surface
 // with no path to a human.
-const SUPPORT_URL = "https://wa.me/2348030000000";
+const SUPPORT_URL = SUPPORT_WHATSAPP_URL;
 
 export function AppSidebar() {
 	const auth = useAuth();

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { MessageCircle } from "lucide-react";
+import { SUPPORT_WHATSAPP_URL } from "@/lib/company";
 
 /**
  * Slim chrome for focused surfaces — checkout and the auth pages. Every nav
@@ -21,7 +22,7 @@ export default function SlimHeader() {
 					/>
 				</Link>
 				<a
-					href="https://wa.me/2348030000000"
+					href={SUPPORT_WHATSAPP_URL}
 					target="_blank"
 					rel="noreferrer"
 					className="flex items-center gap-2 text-xs text-muted-foreground transition-colors duration-300 ease-luxe hover:text-foreground"
