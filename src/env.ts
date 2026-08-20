@@ -18,6 +18,15 @@ export const env = createEnv({
 			.enum(["true", "false"])
 			.optional()
 			.transform((v) => v === "true"),
+		// Company contact details, surfaced on the contact page, footer,
+		// support links and payment copy. Each is optional — when unset,
+		// lib/company.ts falls back to its built-in default — so the real
+		// values can be supplied per environment without a code change.
+		VITE_SUPPORT_PHONE: z.string().min(5).optional(),
+		VITE_SUPPORT_EMAIL: z.email().optional(),
+		VITE_WHATSAPP_URL: z.url().optional(),
+		VITE_APP_STORE_URL: z.url().optional(),
+		VITE_PLAY_STORE_URL: z.url().optional(),
 	},
 	runtimeEnv: viteEnv,
 	skipValidation: !!viteEnv.SKIP_ENV_VALIDATION,
