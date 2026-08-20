@@ -129,7 +129,6 @@ const pastOrderColumns: AppColumnDef<OrderRecord>[] = [
 function OverviewPage() {
 	const auth = useAuth();
 	const customer = auth.status === "authed" ? auth.customer : null;
-	const profileReady = Boolean(customer?.name || customer?.company_name);
 	const pageVisible = usePageVisible();
 	const unpaidPoll = visibleRefetch(pageVisible, LIVE_PAYMENT_MS);
 
@@ -179,15 +178,6 @@ function OverviewPage() {
 		refetchIntervalInBackground: false,
 	});
 	const cookingGasOrders = cookingGasOrdersResult?.requests;
-
-	// The dedicated funding account (404s until Paystack assigns one).
-	const accountQuery = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		enabled: profileReady,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
 
 	const { products } = useCatalog();
 	const todayPrice = useMemo(() => {
@@ -275,7 +265,7 @@ function OverviewPage() {
 				) : (
 					<DashboardHero
 						order={primaryOrder}
-						account={accountQuery.data ?? null}
+						account={primaryOrder?.account ?? null}
 					/>
 				)}
 			</div>
@@ -309,8 +299,6 @@ function OverviewPage() {
 						<WalletCard
 							balance={overview.wallet.balance}
 							todayPrice={todayPrice}
-							account={accountQuery.data ?? null}
-							accountPending={profileReady && accountQuery.isLoading}
 						/>
 					)}
 				</div>

@@ -5,8 +5,8 @@ import { MICRO, PANEL } from "@/components/dashboard/panel";
 import { DataTable } from "@/components/data-table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CopyIconButton } from "@/components/virtual-account";
 import { api, type WalletTransaction } from "@/lib/api";
+import { SUPPORT_PHONE } from "@/lib/company";
 import type { AppColumnDef } from "@/lib/table";
 import { formatNaira } from "@/lib/use-catalog";
 import { cn } from "@/lib/utils";
@@ -18,8 +18,7 @@ export const Route = createFileRoute("/_authed/dashboard/wallet")({
 			{ title: "Wallet | Soroman Energy" },
 			{
 				name: "description",
-				content:
-					"View your Soroman wallet balance, virtual account details, and transaction history.",
+				content: "View your Soroman wallet balance and transaction history.",
 			},
 		],
 	}),
@@ -117,22 +116,12 @@ function WalletPage() {
 		queryFn: () => api.dashboard.overview(),
 	});
 
-	// 404s until Paystack assigns a dedicated account — not a hard failure.
-	const accountQuery = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
-
 	const historyQuery = useQuery({
 		queryKey: ["wallet-transactions", page],
 		queryFn: () => api.wallet.transactions({ page, limit: PAGE_SIZE }),
 	});
 
 	const balance = overviewQuery.data?.wallet.balance;
-	const account = accountQuery.data ?? null;
-	const accountPending = accountQuery.isLoading;
 	const rows = historyQuery.data?.transactions ?? [];
 	const pagination = historyQuery.data?.pagination;
 
@@ -184,38 +173,27 @@ function WalletPage() {
 				</section>
 
 				<section className={cn(PANEL, "px-6 py-5")} aria-label="Fund wallet">
-					<span className={MICRO}>Fund via transfer</span>
-					{accountPending ? (
-						<Skeleton className="mt-3 h-5 w-56" />
-					) : account ? (
-						<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1">
-							<span className="inline-flex items-center gap-2 whitespace-nowrap">
-								<span className="text-lg font-semibold tracking-wide tabular-nums">
-									{account.account_number}
-								</span>
-								<CopyIconButton
-									value={account.account_number}
-									label="Copy account number"
-								/>
-							</span>
-							<span className="text-xs text-muted-foreground">
-								{account.bank} · {account.account_name}
-							</span>
-						</div>
-					) : (
-						<div className="mt-3 space-y-2">
-							<p className="text-sm text-muted-foreground">
-								Your dedicated account is created when you place your first
-								order — it appears here and stays yours for every payment after.
-							</p>
-							<Link
-								to="/order"
-								className="inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
+					<span className={MICRO}>Fund your wallet</span>
+					<div className="mt-3 space-y-2">
+						<p className="text-sm text-muted-foreground">
+							Wallet deposits are recorded by Soroman when your transfer is
+							confirmed. Each order shows the exact bank account to pay into —
+							or contact Soroman on{" "}
+							<a
+								href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}
+								className="font-medium text-accent underline-offset-4 hover:underline"
 							>
-								Place your first order →
-							</Link>
-						</div>
-					)}
+								{SUPPORT_PHONE}
+							</a>{" "}
+							to top up your balance ahead of an order.
+						</p>
+						<Link
+							to="/order"
+							className="inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
+						>
+							Place an order →
+						</Link>
+					</div>
 				</section>
 			</div>
 
@@ -225,7 +203,7 @@ function WalletPage() {
 					data={rows}
 					isLoading={historyQuery.isLoading}
 					emptyTitle="No wallet activity yet."
-					emptyDescription="Transfer into your dedicated account to fund the wallet — every credit and order payment will show up here."
+					emptyDescription="Deposits recorded by Soroman and order payments will show up here."
 					pagination={
 						pagination
 							? {

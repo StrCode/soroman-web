@@ -184,7 +184,7 @@ export default function InvoiceStep({
 							</p>
 						)}
 						<p className="mt-2 text-[0.6rem] leading-relaxed text-muted-foreground/60">
-							Or transfer to your dedicated account below instead.
+							Or transfer to the account below instead.
 						</p>
 					</div>
 				)}
@@ -192,7 +192,7 @@ export default function InvoiceStep({
 				<div className="border-b px-5 py-4">
 					<div className="flex items-center justify-between gap-4">
 						<p className="text-[0.65rem] tracking-[0.22em] text-muted-foreground uppercase">
-							Transfer to your Soroman account
+							Transfer to the account for this order
 						</p>
 						{account && <CopyAllButton account={account} />}
 					</div>
@@ -203,14 +203,13 @@ export default function InvoiceStep({
 							<Skeleton className="h-10 w-full" />
 							<Skeleton className="h-10 w-full" />
 							<p className="text-[0.65rem] text-muted-foreground/70">
-								Creating your dedicated account number…
+								Fetching the payment account…
 							</p>
 						</div>
 					)}
 					<p className="mt-2.5 text-[0.65rem] leading-relaxed text-muted-foreground/70">
-						This account is yours permanently. Transfer from any bank, from as
-						many accounts as you need. No reference code, every transfer matches
-						automatically.
+						Transfer the exact total from any bank. Soroman confirms your
+						payment once the transfer lands — this page updates on its own.
 					</p>
 				</div>
 

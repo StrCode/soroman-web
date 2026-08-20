@@ -18,7 +18,6 @@ import {
 } from "@/components/orders/detail-rail";
 import { OrderDetailSkeleton } from "@/components/orders/order-detail-skeleton";
 import { Button } from "@/components/ui/button";
-import { AccountRows, CopyAllButton } from "@/components/virtual-account";
 import { env } from "@/env";
 import { usePageVisible } from "@/hooks/use-page-visible";
 import { api } from "@/lib/api";
@@ -119,14 +118,6 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 		request.status === "Rejected" || request.status === "Cancelled";
 	const total =
 		request.totalAmount != null ? Number(request.totalAmount) : null;
-
-	const { data: account } = useQuery({
-		queryKey: ["virtualAccount"],
-		queryFn: api.me.virtualAccount,
-		enabled: quoteReady,
-		retry: false,
-		staleTime: 5 * 60_000,
-	});
 
 	const { data: walletBalance } = useQuery({
 		queryKey: ["wallet-balance"],
@@ -265,36 +256,32 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 											{formatNaira(shortfall ?? 0)}.
 										</p>
 										<p className="mt-1 text-xs text-amber-900/75">
-											Transfer the full {formatNaira(total)} below, or top up
-											first.
+											Transfer the full {formatNaira(total)}, or top up first.
 										</p>
 									</div>
 								)}
 
-								{account ? (
-									<div>
-										<div className="flex items-center justify-between gap-3">
-											<p className={cn(MICRO, "text-muted-foreground")}>
-												Transfer to your Soroman account
-											</p>
-											<CopyAllButton account={account} />
-										</div>
-										<AccountRows
-											account={account}
-											className="mt-3 border-foreground/15"
-										/>
-										<p className="mt-3 text-xs text-muted-foreground">
-											Transfer the exact total — payment confirms automatically.
-											Include reference {request.requestNumber} in the narration
-											if your bank asks for one.
-										</p>
-									</div>
-								) : (
-									<p className="text-xs text-muted-foreground">
-										Transfer details aren&apos;t available yet. Try refreshing,
-										or contact support.
+								<div>
+									<p className={cn(MICRO, "text-muted-foreground")}>
+										Pay by transfer
 									</p>
-								)}
+									<p className="mt-2 text-sm text-muted-foreground">
+										Message us on WhatsApp with reference{" "}
+										<span className="font-medium text-foreground">
+											{request.requestNumber}
+										</span>{" "}
+										to get the bank account for this order — your payment is
+										confirmed by Soroman once the transfer lands.
+									</p>
+									<a
+										href={WHATSAPP_URL}
+										target="_blank"
+										rel="noreferrer"
+										className="mt-3 inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
+									>
+										Get payment details on WhatsApp →
+									</a>
+								</div>
 							</div>
 						</section>
 					)}
@@ -379,8 +366,8 @@ function RequestDetail({ request }: { request: LpgOrderRequest }) {
 						<div className="space-y-1">
 							{quoteReady && walletBalance != null && !canCoverFromWallet && (
 								<p className="mb-2 px-1 text-xs text-muted-foreground">
-									Wallet {formatNaira(walletBalance)} — use the transfer account
-									on the left.
+									Wallet {formatNaira(walletBalance)} — pay the rest by transfer
+									(details on the left).
 								</p>
 							)}
 							<RailAction onClick={() => void copyRef()}>

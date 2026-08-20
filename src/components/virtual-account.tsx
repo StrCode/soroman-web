@@ -4,9 +4,10 @@ import type { VirtualAccount } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /**
- * The customer's dedicated (permanent) Paystack account, rendered the same
- * everywhere it appears — invoice step, account page, dashboard strip — so
- * the number always reads as the one account it is.
+ * A payment account rendered the same everywhere it appears — invoice step,
+ * order pages, dashboard hero. Since personal Paystack DVAs were retired,
+ * this is the depot's own bank account for the order being paid, so labels
+ * around it should say "the account for this order", never "your account".
  */
 
 function useCopied(): [boolean, (text: string) => Promise<void>] {
